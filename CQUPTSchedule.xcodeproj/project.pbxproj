@@ -86,11 +86,12 @@
 				};
 			};
 			buildConfigurationList = 73862FFB2F4EF24B00C85344 /* Build configuration list for PBXProject "CQUPTSchedule" */;
-			developmentRegion = en;
+			developmentRegion = "zh-Hans";
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hans",
 			);
 			mainGroup = 73862FF72F4EF24B00C85344;
 			minimizedProjectReferenceProxies = 1;
@@ -254,6 +255,7 @@
 				DEVELOPMENT_TEAM = DXD2Q3A3F7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "重邮课表";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -286,6 +288,7 @@
 				DEVELOPMENT_TEAM = DXD2Q3A3F7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "重邮课表";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
