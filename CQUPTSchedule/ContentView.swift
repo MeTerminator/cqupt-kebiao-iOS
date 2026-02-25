@@ -17,6 +17,25 @@ struct ContentView: View {
     @State private var selectedCourse: CourseInstance?
     @State private var showUserSheet = false
 
+    private func calculateDate(week: Int, day: Int) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        
+        guard let startStr = viewModel.scheduleData?.week1Monday.prefix(10),
+              let startDate = formatter.date(from: String(startStr)) else {
+            return "未知日期"
+        }
+        
+        // 计算偏移量：(周数-1)*7 + (星期几-1)
+        let offset = (week - 1) * 7 + (day - 1)
+        if let targetDate = Calendar.current.date(byAdding: .day, value: offset, to: startDate) {
+            let outFormatter = DateFormatter()
+            outFormatter.dateFormat = "yyyy年M月d日"
+            return outFormatter.string(from: targetDate)
+        }
+        return "日期错误"
+    }
+    
     var body: some View {
         // 使用 ZStack 将提示框置于顶层
         ZStack(alignment: .top) {
@@ -36,7 +55,11 @@ struct ContentView: View {
                         .tabViewStyle(.page(indexDisplayMode: .never))
                     }
                     .navigationBarHidden(true)
-                    .sheet(item: $selectedCourse) { CourseDetailView(course: $0) }
+                    .sheet(item: $selectedCourse) { course in
+                        // 在这里计算该课程的具体日期
+                        let dateString = calculateDate(week: course.week, day: course.day)
+                        CourseDetailView(course: course, courseDate: dateString)
+                    }
                     .sheet(isPresented: $showUserSheet) {
                         UserDetailView(viewModel: viewModel) {
                             isLoggedIn = false
@@ -94,11 +117,18 @@ struct HeaderView: View {
             }
             Spacer()
             HStack(spacing: 20) {
+                // --- 导入日历按钮 ---
+                Button(action: { viewModel.exportToCalendar() }) {
+                    Image(systemName: "calendar.badge.plus")
+                        .font(.system(size: 20))
+                }
+                
                 Button(action: { viewModel.refreshData() }) {
                     Image(systemName: "arrow.clockwise").font(.system(size: 20))
                         .rotationEffect(.degrees(viewModel.isLoading ? 360 : 0))
                         .animation(viewModel.isLoading ? .linear.repeatForever(autoreverses: false) : .default, value: viewModel.isLoading)
                 }
+                
                 Button(action: { showUser = true }) {
                     Image(systemName: "person.circle").font(.system(size: 24))
                 }
@@ -237,34 +267,39 @@ struct CourseBlock: View {
         // 2. 获取本学期总课程数
         let totalCourses = viewModel.courseColorMap.count
         
-        ZStack(alignment: .top) {
-            VStack(spacing: 0) {
-                Spacer()
-                Text(course.course)
-                    .font(.system(size: 14, weight: .bold))
-                    .multilineTextAlignment(.center)
-                
-                Text("").frame(height: 5)
-                
-                Text(course.location)
-                    .font(.system(size: 14))
-                    .multilineTextAlignment(.center)
-                Spacer()
-            }
-            .padding(4)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            // 3. 使用动态均分色环算法
-            .background(Color.dynamicCourseColor(index: colorIndex, total: totalCourses))
-            .foregroundColor(.white)
-            .cornerRadius(8)
-            
-            if course.type != "常规" {
-                Image(systemName: "star.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.yellow)
-                    .padding(.top, 4)
-            }
-        }
+        ZStack {
+                    VStack(spacing: 0) {
+                        Spacer()
+                        
+                        // 1. 课程名称
+                        Text(course.course)
+                            .font(.system(size: 14, weight: .bold)) // 稍微调小一点适配小格子
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true) // 允许换行
+                        
+                        Text("").frame(height: 4)
+                        
+                        // 2. 上课地点
+                        Text(course.location)
+                            .font(.system(size: 14))
+                            .multilineTextAlignment(.center)
+                        
+                        // 3. 黄色五角星：移动到地点下方
+                        if course.type != "常规" {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(.yellow)
+                                .padding(.top, 2)
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(2)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.dynamicCourseColor(index: colorIndex, total: totalCourses))
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+                }
     }
 }
 
@@ -390,6 +425,7 @@ struct LoginView: View {
 // MARK: - 课程详情页
 struct CourseDetailView: View {
     let course: CourseInstance
+    let courseDate: String  // 新增：用于接收计算好的具体日期
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
@@ -401,14 +437,24 @@ struct CourseDetailView: View {
                     DetailRow(label: "上课地点", value: course.location)
                 }
                 Section(header: Text("时间安排")) {
-                    DetailRow(label: "上课时间", value: "\(course.startTime) - \(course.endTime)")
-                    DetailRow(label: "上课节数", value: course.periods.map{String($0)}.joined(separator: ","))
+                    // 添加这一行显示具体日期
+                    DetailRow(label: "上课日期", value: courseDate)
+                    
+                    DetailRow(label: "周数/星期", value: "第\(course.week)周 星期\(getChineseDay(course.day))")
+                    DetailRow(label: "具体时间", value: "\(course.startTime) - \(course.endTime)")
+                    DetailRow(label: "上课节数", value: course.periods.map{String($0)}.joined(separator: ", "))
                     DetailRow(label: "课程类型", value: course.type)
                 }
             }
             .navigationTitle("课程详情")
             .navigationBarItems(trailing: Button("关闭") { presentationMode.wrappedValue.dismiss() })
         }
+    }
+    
+    // 辅助函数：数字转中文星期
+    private func getChineseDay(_ day: Int) -> String {
+        let days = ["一", "二", "三", "四", "五", "六", "日"]
+        return (day >= 1 && day <= 7) ? days[day - 1] : ""
     }
 }
 
@@ -437,3 +483,4 @@ extension Date {
         let f = DateFormatter(); f.dateFormat = "yyyy/M/d"; return f.string(from: self)
     }
 }
+

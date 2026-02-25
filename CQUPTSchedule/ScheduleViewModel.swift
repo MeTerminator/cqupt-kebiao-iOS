@@ -133,4 +133,44 @@ class ScheduleViewModel: ObservableObject {
         let days = Calendar.current.dateComponents([.day], from: startDate, to: Date()).day ?? 0
         self.isCurrentWeekReal = (self.selectedWeek == (days / 7) + 1)
     }
+    
+    func exportToCalendar() {
+        guard !currentId.isEmpty else { return }
+        
+        // 将 https 替换为 webcal 协议
+        let urlString = "webcal://cqupt.ishub.top/api/curriculum/\(currentId)/curriculum.ics"
+        
+        guard let url = URL(string: urlString) else { return }
+        
+        // 直接调用系统浏览器/日历处理该协议
+        if UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url, options: [:]) { success in
+                if !success {
+                    self.triggerToast(msg: "无法打开日历应用")
+                }
+            }
+        } else {
+            self.triggerToast(msg: "系统不支持日历订阅")
+        }
+    }
+
+    private func saveAndOpenICS(data: Data) {
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("cqupt_schedule.ics")
+        do {
+            try data.write(to: tempURL)
+            
+            // 获取当前的 RootViewController 来弹出预览
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootVC = windowScene.windows.first?.rootViewController {
+                let interactionController = UIDocumentInteractionController(url: tempURL)
+                interactionController.delegate = rootVC as? UIDocumentInteractionControllerDelegate
+                // 必须在主线程打开
+                if !interactionController.presentOpenInMenu(from: .zero, in: rootVC.view, animated: true) {
+                    self.triggerToast(msg: "未发现支持日历导入的应用")
+                }
+            }
+        } catch {
+            self.triggerToast(msg: "文件保存失败")
+        }
+    }
 }
