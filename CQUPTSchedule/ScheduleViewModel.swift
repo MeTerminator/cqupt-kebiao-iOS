@@ -16,8 +16,11 @@ class ScheduleViewModel: ObservableObject {
     @Published var isCurrentWeekReal: Bool = false
     
     // 刷新结果提示
-    @Published var alertMessage: String = ""
-    @Published var showAlert: Bool = false
+    @Published var toastMessage: String = ""
+    @Published var showToast: Bool = false
+    
+    // 课程颜色映射表 [课程名: 颜色索引]
+    @Published var courseColorMap: [String: Int] = [:]
     
     private var firstMondayDate: Date?
     private var refreshTimer: AnyCancellable?
@@ -35,11 +38,32 @@ class ScheduleViewModel: ObservableObject {
             .autoconnect()
             .sink { [weak self] _ in self?.refreshData(silent: true) }
     }
+    
+    private func triggerToast(msg: String) {
+        self.toastMessage = msg
+        withAnimation(.spring()) { self.showToast = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            withAnimation { self.showToast = false }
+        }
+    }
+
+    // 分析所有课程并生成颜色映射表
+    private func generateColorMap() {
+        guard let instances = scheduleData?.instances else { return }
+        // 获取所有不重复的课程名称并排序，确保颜色分配逻辑稳定
+        let uniqueCourseNames = Array(Set(instances.map { $0.course })).sorted()
+        
+        var newMap: [String: Int] = [:]
+        for (index, name) in uniqueCourseNames.enumerated() {
+            newMap[name] = index
+        }
+        self.courseColorMap = newMap
+    }
 
     // 启动流：读缓存 -> 自动静默同步网络
     func startup(studentId: String) {
         self.currentId = studentId
-        loadFromCache()
+        loadFromCache(isInitial: true)
         refreshData(silent: true)
     }
 
@@ -55,14 +79,13 @@ class ScheduleViewModel: ObservableObject {
                 if let data = data, let decoded = try? JSONDecoder().decode(ScheduleResponse.self, from: data) {
                     self?.scheduleData = decoded
                     self?.saveToCache(data: data)
-                    self?.parseStartDate()
-                    if !silent {
-                        self?.alertMessage = "课表同步成功"
-                        self?.showAlert = true
-                    }
+                    
+                    self?.generateColorMap() // 更新课程颜色映射
+                    self?.parseStartDate(autoJump: false)
+                    
+                    if !silent { self?.triggerToast(msg: "课表已同步") }
                 } else if !silent {
-                    self?.alertMessage = "刷新失败: \(error?.localizedDescription ?? "解析错误")"
-                    self?.showAlert = true
+                    self?.triggerToast(msg: "刷新失败: \(error?.localizedDescription ?? "解析错误")")
                 }
             }
         }.resume()
@@ -70,17 +93,18 @@ class ScheduleViewModel: ObservableObject {
 
     private func saveToCache(data: Data) { try? data.write(to: cacheURL) }
 
-    private func loadFromCache() {
+    private func loadFromCache(isInitial: Bool) {
         if let data = try? Data(contentsOf: cacheURL),
            let decoded = try? JSONDecoder().decode(ScheduleResponse.self, from: data) {
             self.scheduleData = decoded
-            self.parseStartDate()
+            self.generateColorMap() // 从缓存读取后也要生成颜色映射
+            self.parseStartDate(autoJump: isInitial)
         }
     }
 
     func clearCache() { try? FileManager.default.removeItem(at: cacheURL) }
 
-    private func parseStartDate() {
+    private func parseStartDate(autoJump: Bool = false) {
         guard let data = scheduleData else { return }
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime]
@@ -95,8 +119,12 @@ class ScheduleViewModel: ObservableObject {
         if let finalDate = date {
             self.firstMondayDate = finalDate
             let days = Calendar.current.dateComponents([.day], from: finalDate, to: Date()).day ?? 0
-            let week = (days / 7) + 1
-            self.selectedWeek = max(1, min(week, 20))
+            let realWeek = (days / 7) + 1
+
+            if autoJump {
+                self.selectedWeek = max(1, min(realWeek, 20))
+            }
+            updateCurrentWeekStatus()
         }
     }
 
