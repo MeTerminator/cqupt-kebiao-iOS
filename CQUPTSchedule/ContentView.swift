@@ -113,19 +113,61 @@ struct ScheduleGrid: View {
     let weekToShow: Int
     let detailAction: (CourseInstance) -> Void
     
-    // 如果是 iPad，格子高度增加到 100
     private var hourHeight: CGFloat {
         UIDevice.current.userInterfaceIdiom == .pad ? 100 : 70
     }
     
+    // --- 日期计算逻辑 ---
+    private func getDate(for dayIndex: Int) -> (month: String, day: String) {
+        let calendar = Calendar.current
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        
+        // 解析第一周周一的日期
+        guard let startDateString = viewModel.scheduleData?.week1Monday.prefix(10),
+              let startDate = formatter.date(from: String(startDateString)) else {
+            return ("", "")
+        }
+        
+        // 计算偏移量：(周数-1)*7 + (礼拜几-1)
+        let offsetDays = (weekToShow - 1) * 7 + dayIndex
+        if let targetDate = calendar.date(byAdding: .day, value: offsetDays, to: startDate) {
+            let day = calendar.component(.day, from: targetDate)
+            let month = calendar.component(.month, from: targetDate)
+            return ("\(month)", "\(day)")
+        }
+        return ("", "")
+    }
+
     var body: some View {
         VStack(spacing: 0) {
+            // 修改后的头部：显示月份和日期数字
             HStack(spacing: 0) {
-                Text("月").font(.system(size: 10)).frame(width: 45)
-                ForEach(["一", "二", "三", "四", "五", "六", "日"], id: \.self) { day in
-                    Text(day).frame(maxWidth: .infinity).font(.system(size: 14))
+                // 左侧开头显示 X月
+                Text("\(getDate(for: 0).month)\n月")
+                    .font(.system(size: 11, weight: .medium))
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.secondary)
+                    .frame(width: 45)
+                
+                ForEach(0..<7, id: \.self) { index in
+                    let dayNames = ["一", "二", "三", "四", "五", "六", "日"]
+                    let dateInfo = getDate(for: index)
+                    
+                    VStack(spacing: 2) {
+                        Text(dayNames[index])
+                            .font(.system(size: 14, weight: .medium))
+                        Text(dateInfo.day)
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    // 如果是今天，可以加个背景高亮（可选）
+                    .background(isToday(dayIndex: index) ? Color.secondary.opacity(0.1) : Color.clear)
+                    .cornerRadius(4)
                 }
-            }.padding(.bottom, 10)
+            }
+            .padding(.bottom, 10)
             
             ScrollView {
                 HStack(alignment: .top, spacing: 0) {
@@ -159,6 +201,28 @@ struct ScheduleGrid: View {
                 }
             }
         }
+    }
+    
+    // 辅助函数：判断是否为正在显示的这一天
+    private func isToday(dayIndex: Int) -> Bool {
+        // 1. 如果显示的不是现实中的本周，直接返回 false
+        guard viewModel.isCurrentWeekReal && weekToShow == viewModel.selectedWeek else {
+            return false
+        }
+        
+        // 2. 获取现实中今天是礼拜几
+        // Calendar.current.component(.weekday) 返回值：1是周日，2是周一...7是周六
+        let calendar = Calendar.current
+        let weekday = calendar.component(.weekday, from: Date())
+        
+        // 3. 将系统 weekday 转换为你的 dayIndex (0是周一...6是周日)
+        // 转换逻辑：
+        // 周一: 2 -> 0
+        // 周六: 7 -> 5
+        // 周日: 1 -> 6
+        let normalizedTodayIndex = (weekday + 5) % 7
+        
+        return dayIndex == normalizedTodayIndex
     }
 }
 
