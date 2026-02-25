@@ -52,6 +52,7 @@ struct ContentView: View {
                     }
                 }
             }
+            .navigationViewStyle(.stack)
             
             // 提示框逻辑：放在 NavigationView 同级，确保层级最高
             if viewModel.showToast {
@@ -111,7 +112,11 @@ struct ScheduleGrid: View {
     @ObservedObject var viewModel: ScheduleViewModel
     let weekToShow: Int
     let detailAction: (CourseInstance) -> Void
-    let hourHeight: CGFloat = 70
+    
+    // 如果是 iPad，格子高度增加到 100
+    private var hourHeight: CGFloat {
+        UIDevice.current.userInterfaceIdiom == .pad ? 100 : 70
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -292,6 +297,7 @@ struct LoginView: View {
                             .transition(.opacity)
                     }
                 }
+                .frame(maxWidth: 400)
                 .padding(.horizontal, 40)
                 
                 // 登录按钮
@@ -306,6 +312,7 @@ struct LoginView: View {
                         .shadow(color: isValidId ? schoolGreen.opacity(0.3) : .clear, radius: 10, x: 0, y: 5)
                 }
                 .disabled(!isValidId)
+                .frame(maxWidth: 400)
                 .padding(.horizontal, 40)
                 
                 Spacer()
