@@ -468,7 +468,6 @@ struct CourseDetailView: View {
 }
 
 // MARK: - 日历导出配置页
-// MARK: - 日历导出配置页
 struct CalendarExportView: View {
     @ObservedObject var viewModel: ScheduleViewModel
     @Environment(\.presentationMode) var pm
@@ -483,7 +482,7 @@ struct CalendarExportView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("日历设置")) {
+                Section(header: Text("日历设置"), footer: Text("注意：同步将彻底清空系统日历中名为“\(calendarName)”的所有现有事件。").foregroundColor(.red)) {
                     HStack {
                         Text("日历名称")
                         TextField("请输入日历名称", text: $calendarName)
@@ -491,7 +490,7 @@ struct CalendarExportView: View {
                     }
                 }
                 
-                Section(header: Text("提醒设置"), footer: Text("同步后，系统日历将自动生成对应的课程安排及提醒。")) {
+                Section(header: Text("提醒设置")) {
                     Toggle("开启上课提醒", isOn: $enableAlarm)
                     
                     if enableAlarm {
@@ -501,9 +500,8 @@ struct CalendarExportView: View {
                                 Text("前 \(min) 分钟").tag(min)
                             }
                         }
-                        // 关键修复点：监听第一次提醒的变化
-                        .onChange(of: firstAlert) { newValue in
-                            // 如果第二次提醒的时间点不再小于第一次提醒，自动设为“不设置”
+                        // 适配 iOS 17 的新语法：onChange(of: newValue)
+                        .onChange(of: firstAlert) { oldValue, newValue in
                             if secondAlert >= newValue {
                                 secondAlert = 0
                             }
@@ -522,7 +520,6 @@ struct CalendarExportView: View {
                 Section {
                     Button(action: {
                         let first = enableAlarm ? firstAlert : nil
-                        // 确保只有大于0的值才作为有效提醒传入
                         let second = (enableAlarm && secondAlert > 0) ? secondAlert : nil
                         let finalName = calendarName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "重邮课表" : calendarName
                         
@@ -532,14 +529,13 @@ struct CalendarExportView: View {
                             calendarName: finalName
                         )
                         pm.wrappedValue.dismiss()
-                    })
-                    {
+                    }) {
                         HStack {
                             Spacer()
                             if viewModel.isLoading {
                                 ProgressView().padding(.trailing, 8)
                             }
-                            Text("同步至系统日历").bold()
+                            Text("清空并覆盖同步").bold()
                             Spacer()
                         }
                     }
