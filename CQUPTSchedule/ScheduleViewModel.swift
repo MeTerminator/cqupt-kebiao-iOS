@@ -134,23 +134,36 @@ class ScheduleViewModel: ObservableObject {
         self.isCurrentWeekReal = (self.selectedWeek == (days / 7) + 1)
     }
     
-    func exportToCalendar() {
+    func exportToCalendar(firstAlert: Int?, secondAlert: Int?, calendarName: String) {
         guard !currentId.isEmpty else { return }
-        
-        // 将 https 替换为 webcal 协议
-        let urlString = "webcal://cqupt.ishub.top/api/curriculum/\(currentId)/curriculum.ics"
-        
-        guard let url = URL(string: urlString) else { return }
-        
-        // 直接调用系统浏览器/日历处理该协议
-        if UIApplication.shared.canOpenURL(url) {
-            UIApplication.shared.open(url, options: [:]) { success in
-                if !success {
-                    self.triggerToast(msg: "无法打开日历应用")
+
+        // 调用之前写的权限检查逻辑
+        CalendarManager.shared.requestAccess { granted in
+            if granted {
+                self.isLoading = true
+                DispatchQueue.global(qos: .userInitiated).async {
+                    do {
+                        try CalendarManager.shared.syncCourses(
+                            instances: self.scheduleData?.instances ?? [],
+                            startDateStr: self.scheduleData?.week1Monday ?? "",
+                            firstAlert: firstAlert,
+                            secondAlert: secondAlert,
+                            calendarName: calendarName // 传递给 Manager
+                        )
+                        DispatchQueue.main.async {
+                            self.isLoading = false
+                            self.triggerToast(msg: "同步至“\(calendarName)”成功")
+                        }
+                    } catch {
+                        DispatchQueue.main.async {
+                            self.isLoading = false
+                            self.triggerToast(msg: "同步失败")
+                        }
+                    }
                 }
+            } else {
+                self.triggerToast(msg: "需要日历权限")
             }
-        } else {
-            self.triggerToast(msg: "系统不支持日历订阅")
         }
     }
 

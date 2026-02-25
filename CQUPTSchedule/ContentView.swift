@@ -16,6 +16,7 @@ struct ContentView: View {
     @State private var inputId: String = ""
     @State private var selectedCourse: CourseInstance?
     @State private var showUserSheet = false
+    @State private var showCalendarSheet = false
 
     private func calculateDate(week: Int, day: Int) -> String {
         let formatter = DateFormatter()
@@ -42,7 +43,11 @@ struct ContentView: View {
             NavigationView {
                 if isLoggedIn {
                     VStack(spacing: 0) {
-                        HeaderView(viewModel: viewModel, showUser: $showUserSheet)
+                        HeaderView(
+                            viewModel: viewModel,
+                            showUser: $showUserSheet,
+                            showCalendarSheet: $showCalendarSheet
+                        )
                         
                         TabView(selection: $viewModel.selectedWeek) {
                             ForEach(1...20, id: \.self) { week in
@@ -65,6 +70,9 @@ struct ContentView: View {
                             isLoggedIn = false
                             savedId = ""
                         }
+                    }
+                    .sheet(isPresented: $showCalendarSheet) {
+                        CalendarExportView(viewModel: viewModel)
                     }
                     .onAppear { viewModel.startup(studentId: savedId) }
                 } else {
@@ -104,6 +112,7 @@ struct ContentView: View {
 struct HeaderView: View {
     @ObservedObject var viewModel: ScheduleViewModel
     @Binding var showUser: Bool
+    @Binding var showCalendarSheet: Bool
     
     var body: some View {
         HStack {
@@ -118,7 +127,7 @@ struct HeaderView: View {
             Spacer()
             HStack(spacing: 20) {
                 // --- 导入日历按钮 ---
-                Button(action: { viewModel.exportToCalendar() }) {
+                Button(action: { showCalendarSheet = true }) {
                     Image(systemName: "calendar.badge.plus")
                         .font(.system(size: 20))
                 }
@@ -455,6 +464,93 @@ struct CourseDetailView: View {
     private func getChineseDay(_ day: Int) -> String {
         let days = ["一", "二", "三", "四", "五", "六", "日"]
         return (day >= 1 && day <= 7) ? days[day - 1] : ""
+    }
+}
+
+// MARK: - 日历导出配置页
+// MARK: - 日历导出配置页
+struct CalendarExportView: View {
+    @ObservedObject var viewModel: ScheduleViewModel
+    @Environment(\.presentationMode) var pm
+    
+    @State private var calendarName = "重邮课表"
+    @State private var enableAlarm = true
+    @State private var firstAlert: Int = 30
+    @State private var secondAlert: Int = 10
+    
+    let options = [5, 10, 15, 30, 45, 60]
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("日历设置")) {
+                    HStack {
+                        Text("日历名称")
+                        TextField("请输入日历名称", text: $calendarName)
+                            .multilineTextAlignment(.trailing)
+                    }
+                }
+                
+                Section(header: Text("提醒设置"), footer: Text("同步后，系统日历将自动生成对应的课程安排及提醒。")) {
+                    Toggle("开启上课提醒", isOn: $enableAlarm)
+                    
+                    if enableAlarm {
+                        // 第一次提醒选择器
+                        Picker("第一次提醒", selection: $firstAlert) {
+                            ForEach(options, id: \.self) { min in
+                                Text("前 \(min) 分钟").tag(min)
+                            }
+                        }
+                        // 关键修复点：监听第一次提醒的变化
+                        .onChange(of: firstAlert) { newValue in
+                            // 如果第二次提醒的时间点不再小于第一次提醒，自动设为“不设置”
+                            if secondAlert >= newValue {
+                                secondAlert = 0
+                            }
+                        }
+                        
+                        // 第二次提醒选择器
+                        Picker("第二次提醒", selection: $secondAlert) {
+                            Text("不设置").tag(0)
+                            ForEach(options.filter { $0 < firstAlert }, id: \.self) { min in
+                                Text("前 \(min) 分钟").tag(min)
+                            }
+                        }
+                    }
+                }
+                
+                Section {
+                    Button(action: {
+                        let first = enableAlarm ? firstAlert : nil
+                        // 确保只有大于0的值才作为有效提醒传入
+                        let second = (enableAlarm && secondAlert > 0) ? secondAlert : nil
+                        let finalName = calendarName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "重邮课表" : calendarName
+                        
+                        viewModel.exportToCalendar(
+                            firstAlert: first,
+                            secondAlert: second,
+                            calendarName: finalName
+                        )
+                        pm.wrappedValue.dismiss()
+                    })
+                    {
+                        HStack {
+                            Spacer()
+                            if viewModel.isLoading {
+                                ProgressView().padding(.trailing, 8)
+                            }
+                            Text("同步至系统日历").bold()
+                            Spacer()
+                        }
+                    }
+                    .disabled(viewModel.isLoading)
+                    .foregroundColor(.white)
+                    .listRowBackground(viewModel.isLoading ? Color.gray : Color.blue)
+                }
+            }
+            .navigationTitle("日历同步")
+            .navigationBarItems(leading: Button("取消") { pm.wrappedValue.dismiss() })
+        }
     }
 }
 
