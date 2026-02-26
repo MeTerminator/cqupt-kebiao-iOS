@@ -117,21 +117,44 @@ class ScheduleViewModel: ObservableObject {
         }
         
         if let finalDate = date {
-            self.firstMondayDate = finalDate
-            let days = Calendar.current.dateComponents([.day], from: finalDate, to: Date()).day ?? 0
-            let realWeek = (days / 7) + 1
-
+            // 关键：将时间统一到周一的凌晨 00:00:00，避免时差干扰
+            self.firstMondayDate = Calendar.current.startOfDay(for: finalDate)
+            
             if autoJump {
-                self.selectedWeek = max(1, min(realWeek, 20))
+                let currentRealWeek = calculateCurrentRealWeek()
+                // 如果还没开学 (realWeek < 1)，默认停留在第 1 周查看，但状态会显示“非本周/未开学”
+                self.selectedWeek = max(1, min(currentRealWeek, 20))
             }
             updateCurrentWeekStatus()
         }
     }
 
+    /// 提取出来的纯净周数计算函数
+    func calculateCurrentRealWeek() -> Int {
+        guard let startDate = firstMondayDate else { return 1 }
+        let calendar = Calendar.current
+        let now = calendar.startOfDay(for: Date())
+        
+        // 计算从第一周周一到今天的天数
+        let components = calendar.dateComponents([.day], from: startDate, to: now)
+        let days = components.day ?? 0
+        
+        // 核心修复：days 为负数时代表未开学
+        if days < 0 {
+            return -1 // 使用 -1 代表“未开学”状态
+        }
+        return (days / 7) + 1
+    }
+
     func updateCurrentWeekStatus() {
-        guard let startDate = firstMondayDate else { return }
-        let days = Calendar.current.dateComponents([.day], from: startDate, to: Date()).day ?? 0
-        self.isCurrentWeekReal = (self.selectedWeek == (days / 7) + 1)
+        let realWeek = calculateCurrentRealWeek()
+        
+        // 只有当“当前选择的周”等于“现实中的周”，且“现实中已经开学”时，才标记为本周
+        if realWeek >= 1 && self.selectedWeek == realWeek {
+            self.isCurrentWeekReal = true
+        } else {
+            self.isCurrentWeekReal = false
+        }
     }
     
     func exportToCalendar(firstAlert: Int?, secondAlert: Int?, calendarName: String) {

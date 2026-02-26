@@ -120,7 +120,7 @@ struct HeaderView: View {
                 Text(Date().formatToSchedule()).font(.system(size: 22, weight: .bold))
                 HStack {
                     Text("第\(viewModel.selectedWeek)周")
-                    Text(viewModel.isCurrentWeekReal ? "本周" : "非本周")
+                    Text(viewModel.calculateCurrentRealWeek() < 1 ? "未开学" : (viewModel.isCurrentWeekReal ? "本周" : "非本周"))
                         .padding(.horizontal, 6).background(Color.secondary.opacity(0.1)).cornerRadius(4)
                 }.font(.system(size: 14)).foregroundColor(.secondary)
             }
