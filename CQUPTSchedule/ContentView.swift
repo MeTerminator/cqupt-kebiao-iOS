@@ -180,9 +180,9 @@ struct ScheduleGrid: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // 修改后的头部：显示月份和日期数字
+            // 头部：显示月份和日期数字
             HStack(spacing: 0) {
-                // 左侧开头显示 X月
+                // 左上角月份显示
                 Text("\(getDate(for: 0).month)\n月")
                     .font(.system(size: 11, weight: .medium))
                     .multilineTextAlignment(.center)
@@ -201,7 +201,6 @@ struct ScheduleGrid: View {
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity)
-                    // 如果是今天，可以加个背景高亮（可选）
                     .background(isToday(dayIndex: index) ? Color.secondary.opacity(0.1) : Color.clear)
                     .cornerRadius(4)
                 }
@@ -210,24 +209,49 @@ struct ScheduleGrid: View {
             
             ScrollView {
                 HStack(alignment: .top, spacing: 0) {
+                    // --- 左侧时间/节数栏 ---
                     VStack(spacing: 0) {
-                        ForEach(1...14, id: \.self) { i in
+                        ForEach(1...12, id: \.self) { i in
                             VStack {
                                 Text("\(i)").bold()
                                 if let t = timeTable[i] {
                                     Text(t["begin"]!).font(.system(size: 8))
                                     Text(t["end"]!).font(.system(size: 8))
                                 }
-                            }.frame(width: 45, height: hourHeight).foregroundColor(.gray)
+                            }
+                            .frame(width: 45, height: hourHeight)
+                            .foregroundColor(.gray)
+                            // 分段背景色设置
+                            .background(
+                                Group {
+                                    if i >= 1 && i <= 4 {
+                                        Color.green.opacity(0.12) // 1-4节：绿色
+                                    } else if i >= 5 && i <= 8 {
+                                        Color.blue.opacity(0.12)  // 5-8节：蓝色
+                                    } else if i >= 9 && i <= 12 {
+                                        Color.purple.opacity(0.12)// 9-12节：紫色
+                                    } else {
+                                        Color.clear
+                                    }
+                                }
+                            )
                         }
                     }
+                    
+                    // --- 右侧课程格子区域 ---
                     GeometryReader { geo in
                         let colW = geo.size.width / 7
                         ZStack(alignment: .topLeading) {
-                            ForEach(0...14, id: \.self) { i in
-                                Path { p in p.move(to: .init(x: 0, y: CGFloat(i)*hourHeight)); p.addLine(to: .init(x: geo.size.width, y: CGFloat(i)*hourHeight)) }
-                                    .stroke(Color.gray.opacity(0.1), lineWidth: 0.5)
+                            // 绘制背景横线
+                            ForEach(0...12, id: \.self) { i in
+                                Path { p in
+                                    p.move(to: .init(x: 0, y: CGFloat(i)*hourHeight))
+                                    p.addLine(to: .init(x: geo.size.width, y: CGFloat(i)*hourHeight))
+                                }
+                                .stroke(Color.gray.opacity(0.1), lineWidth: 0.5)
                             }
+                            
+                            // 渲染课程块
                             let courses = viewModel.scheduleData?.instances.filter { $0.week == weekToShow } ?? []
                             ForEach(courses) { course in
                                 CourseBlock(viewModel: viewModel, course: course)
@@ -236,7 +260,8 @@ struct ScheduleGrid: View {
                                     .onTapGesture { detailAction(course) }
                             }
                         }
-                    }.frame(height: hourHeight * 14)
+                    }
+                    .frame(height: hourHeight * 12)
                 }
             }
         }
@@ -244,27 +269,16 @@ struct ScheduleGrid: View {
     
     // 辅助函数：判断是否为正在显示的这一天
     private func isToday(dayIndex: Int) -> Bool {
-        // 1. 如果显示的不是现实中的本周，直接返回 false
         guard viewModel.isCurrentWeekReal && weekToShow == viewModel.selectedWeek else {
             return false
         }
-        
-        // 2. 获取现实中今天是礼拜几
-        // Calendar.current.component(.weekday) 返回值：1是周日，2是周一...7是周六
         let calendar = Calendar.current
         let weekday = calendar.component(.weekday, from: Date())
-        
-        // 3. 将系统 weekday 转换为你的 dayIndex (0是周一...6是周日)
-        // 转换逻辑：
-        // 周一: 2 -> 0
-        // 周六: 7 -> 5
-        // 周日: 1 -> 6
+        // 将系统 weekday (周日1, 周一2...) 转换为 0-6 (周一0...周日6)
         let normalizedTodayIndex = (weekday + 5) % 7
-        
         return dayIndex == normalizedTodayIndex
     }
 }
-
 // MARK: - 课程块
 struct CourseBlock: View {
     @ObservedObject var viewModel: ScheduleViewModel // 引入观察，以便获取课程总数和索引
