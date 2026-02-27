@@ -1,0 +1,23 @@
+# Xcode 派生数据与缓存
+build/
+DerivedData/
+
+# 个人用户设置
+*.xcuserdata
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+
+# macOS 系统文件
+.DS_Store
+
+# 依赖管理
+.build/
+Packages/
+# 如果使用 CocoaPods，取消下面这行的注释
+# Pods/
+
+# 构建产物
+*.ipa
+*.app
+*.framework
+*.dSYM
