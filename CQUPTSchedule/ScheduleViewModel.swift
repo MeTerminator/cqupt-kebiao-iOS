@@ -48,16 +48,28 @@ class ScheduleViewModel: ObservableObject {
     }
 
     // 分析所有课程并生成颜色映射表
-    private func generateColorMap() {
-        guard let instances = scheduleData?.instances else { return }
-        // 获取所有不重复的课程名称并排序，确保颜色分配逻辑稳定
-        let uniqueCourseNames = Array(Set(instances.map { $0.course })).sorted()
-        
+    func generateColorMap() {
         var newMap: [String: Int] = [:]
-        for (index, name) in uniqueCourseNames.enumerated() {
+        
+        // 1. 获取所有课程实例，如果没有数据则直接返回
+        guard let instances = scheduleData?.instances else { return }
+        
+        // 2. 提取所有非考试课程的名称，并进行去重
+        let nonExamCourseNames = Set(instances.filter { !$0.type.contains("考试") }.map { $0.course })
+        
+        // 3. 对课程名称进行排序 (字母/汉字顺序)
+        // 排序确保了每次刷新时，课程 A 永远分配到相同的 index，颜色从而固定
+        let sortedNames = nonExamCourseNames.sorted()
+        
+        // 4. 按顺序分配索引
+        for (index, name) in sortedNames.enumerated() {
             newMap[name] = index
         }
-        self.courseColorMap = newMap
+        
+        // 5. 更新到 ViewModel 的属性中（建议在主线程更新 UI 相关数据）
+        DispatchQueue.main.async {
+            self.courseColorMap = newMap
+        }
     }
 
     // 启动流：读缓存 -> 自动静默同步网络
@@ -122,8 +134,8 @@ class ScheduleViewModel: ObservableObject {
             
             if autoJump {
                 let currentRealWeek = calculateCurrentRealWeek()
-                // 如果还没开学 (realWeek < 1)，默认停留在第 1 周查看，但状态会显示“非本周/未开学”
-                self.selectedWeek = max(1, min(currentRealWeek, 20))
+                // 如果还没开学 (realWeek < 1)，默认停留在第 0 周查看，但状态会显示“非本周/未开学”
+                self.selectedWeek = max(0, min(currentRealWeek, 20))
             }
             updateCurrentWeekStatus()
         }
@@ -135,25 +147,35 @@ class ScheduleViewModel: ObservableObject {
         let calendar = Calendar.current
         let now = calendar.startOfDay(for: Date())
         
-        // 计算从第一周周一到今天的天数
         let components = calendar.dateComponents([.day], from: startDate, to: now)
         let days = components.day ?? 0
         
-        // 核心修复：days 为负数时代表未开学
-        if days < 0 {
-            return -1 // 使用 -1 代表“未开学”状态
+        // 如果在开学前 1-7 天，返回 0
+        if days < 0 && days >= -7 {
+            return 0
+        } else if days < -7 {
+            return -1 // 更早的时间显示为未开学
         }
+        
         return (days / 7) + 1
     }
 
     func updateCurrentWeekStatus() {
         let realWeek = calculateCurrentRealWeek()
         
-        // 只有当“当前选择的周”等于“现实中的周”，且“现实中已经开学”时，才标记为本周
-        if realWeek >= 1 && self.selectedWeek == realWeek {
-            self.isCurrentWeekReal = true
+        // 定义“应当显示的周”：
+        let expectedWeek: Int
+        if realWeek <= 0 {
+            // 如果是准备期，检查第 0 周是否有课
+            let hasCourseInWeek0 = scheduleData?.instances.contains { $0.week == 0 } ?? false
+            expectedWeek = hasCourseInWeek0 ? 0 : 1
         } else {
-            self.isCurrentWeekReal = false
+            expectedWeek = min(realWeek, 20)
+        }
+        
+        // 核心逻辑：只要当前选中的周等于我们认为“现在该看”的那一周，就标记为 Real
+        DispatchQueue.main.async {
+            self.isCurrentWeekReal = (self.selectedWeek == expectedWeek)
         }
     }
     

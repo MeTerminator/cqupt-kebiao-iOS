@@ -50,7 +50,7 @@ struct ContentView: View {
                         )
                         
                         TabView(selection: $viewModel.selectedWeek) {
-                            ForEach(1...20, id: \.self) { week in
+                            ForEach(0...20, id: \.self) { week in
                                 ScheduleGrid(viewModel: viewModel, weekToShow: week) { course in
                                     self.selectedCourse = course
                                 }
@@ -58,6 +58,8 @@ struct ContentView: View {
                             }
                         }
                         .tabViewStyle(.page(indexDisplayMode: .never))
+                        .animation(.easeInOut(duration: 0.6), value: viewModel.selectedWeek)
+                        
                     }
                     .navigationBarHidden(true)
                     .sheet(item: $selectedCourse) { course in
@@ -116,33 +118,99 @@ struct HeaderView: View {
     
     var body: some View {
         HStack {
+            // --- 左侧：日期与当前显示周数 ---
             VStack(alignment: .leading, spacing: 4) {
-                Text(Date().formatToSchedule()).font(.system(size: 22, weight: .bold))
-                HStack {
+                Text(Date().formatToSchedule())
+                    .font(.system(size: 22, weight: .bold))
+                
+                HStack(spacing: 6) {
                     Text("第\(viewModel.selectedWeek)周")
-                    Text(viewModel.calculateCurrentRealWeek() < 1 ? "未开学" : (viewModel.isCurrentWeekReal ? "本周" : "非本周"))
-                        .padding(.horizontal, 6).background(Color.secondary.opacity(0.1)).cornerRadius(4)
-                }.font(.system(size: 14)).foregroundColor(.secondary)
+                        .fontWeight(.semibold)
+                    
+                    let realWeek = viewModel.calculateCurrentRealWeek()
+                    Text(realWeek == 0 ? "开学准备" : (realWeek < 0 ? "未开学" : (viewModel.isCurrentWeekReal ? "本周" : "非当前周")))
+                        .font(.system(size: 10, weight: .bold))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(viewModel.isCurrentWeekReal ? Color.green.opacity(0.15) : Color.secondary.opacity(0.15))
+                        .foregroundColor(viewModel.isCurrentWeekReal ? .green : .secondary)
+                        .cornerRadius(4)
+                }
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
             }
+            
             Spacer()
-            HStack(spacing: 20) {
-                // --- 导入日历按钮 ---
-                Button(action: { showCalendarSheet = true }) {
+            
+            // --- 右侧：功能按钮组 ---
+            HStack(spacing: 16) {
+                // 1. 动态返回按钮
+                if !viewModel.isCurrentWeekReal {
+                    Button(action: {
+                        let realWeek = viewModel.calculateCurrentRealWeek()
+                        var targetWeek: Int
+                        
+                        if realWeek <= 0 {
+                            let hasCourseInWeek0 = viewModel.scheduleData?.instances.contains { $0.week == 0 } ?? false
+                            targetWeek = hasCourseInWeek0 ? 0 : 1
+                        } else {
+                            targetWeek = min(realWeek, 20)
+                        }
+                        
+                        // --- 核心修改：明确指定时长和类型 ---
+                        withAnimation(.easeInOut(duration: 0.6)) {
+                            viewModel.selectedWeek = targetWeek
+                        }
+                        
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    }) {
+                        Image(systemName: "arrow.uturn.backward.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.orange)
+                    }
+                    // 按钮本身的消失动画
+                    .transition(.asymmetric(
+                        insertion: .scale.combined(with: .opacity),
+                        removal: .opacity.combined(with: .scale(scale: 0.8))
+                    ))
+                }
+
+                // 2. 导入日历按钮
+                Button(action: {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    showCalendarSheet = true
+                }) {
                     Image(systemName: "calendar.badge.plus")
                         .font(.system(size: 20))
                 }
                 
-                Button(action: { viewModel.refreshData() }) {
-                    Image(systemName: "arrow.clockwise").font(.system(size: 20))
+                // 3. 刷新按钮
+                Button(action: {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    viewModel.refreshData()
+                }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 20))
                         .rotationEffect(.degrees(viewModel.isLoading ? 360 : 0))
-                        .animation(viewModel.isLoading ? .linear.repeatForever(autoreverses: false) : .default, value: viewModel.isLoading)
+                        .animation(viewModel.isLoading ? .linear(duration: 1).repeatForever(autoreverses: false) : .default, value: viewModel.isLoading)
                 }
                 
-                Button(action: { showUser = true }) {
-                    Image(systemName: "person.circle").font(.system(size: 24))
+                // 4. 个人中心按钮
+                Button(action: {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    showUser = true
+                }) {
+                    Image(systemName: "person.circle")
+                        .font(.system(size: 24))
                 }
             }
-        }.padding()
+            .foregroundColor(.primary)
+            // 关键：使右侧按钮在返回按钮消失时，位置平滑移动
+            .animation(.spring(response: 0.35), value: viewModel.isCurrentWeekReal)
+        }
+        .padding(.horizontal)
+        .padding(.top, 10)
+        .padding(.bottom, 5)
     }
 }
 
@@ -152,64 +220,77 @@ struct ScheduleGrid: View {
     let weekToShow: Int
     let detailAction: (CourseInstance) -> Void
     
+    // 基础高度基准
     private var hourHeight: CGFloat {
         UIDevice.current.userInterfaceIdiom == .pad ? 100 : 70
     }
     
-    // --- 日期计算逻辑 ---
+    // 辅助函数：将 "HH:mm" 转为分钟数
+    private func toMinutes(_ timeStr: String) -> Int {
+        let parts = timeStr.split(separator: ":")
+        guard parts.count == 2, let h = Int(parts[0]), let m = Int(parts[1]) else { return 0 }
+        return h * 60 + m
+    }
+
+    // 计算位置和高度的核心逻辑
+    private func calculateGeometry(for course: CourseInstance) -> (y: CGFloat, height: CGFloat) {
+        guard let firstP = course.periods.first, let lastP = course.periods.last,
+              let stdBegin = timeTable[firstP]?["begin"],
+              let stdEnd = timeTable[lastP]?["end"] else {
+            return (0, 0)
+        }
+
+        // 1. 计算标准锚点：第 N 节课在格子里本该在的位置
+        let standardY = CGFloat(firstP - 1) * hourHeight
+        let standardHeight = CGFloat(course.periods.count) * hourHeight
+
+        // 2. 计算偏差（分钟）
+        // 比例尺：假设标准一节课（含课间）45-55分钟对应一个 hourHeight，取 50 为平均参考
+        let pixelsPerMinute = hourHeight / 50.0
+        
+        let startDiff = CGFloat(toMinutes(course.startTime) - toMinutes(stdBegin))
+        let endDiff = CGFloat(toMinutes(course.endTime) - toMinutes(stdEnd))
+
+        // 3. 应用偏差
+        let finalY = standardY + (startDiff * pixelsPerMinute)
+        // 高度 = 原始标准高度 - 顶部偏移 + 底部偏移
+        let finalHeight = standardHeight - (startDiff * pixelsPerMinute) + (endDiff * pixelsPerMinute)
+
+        return (finalY, max(finalHeight, 30)) // 确保高度不小于30
+    }
+
     private func getDate(for dayIndex: Int) -> (month: String, day: String) {
         let calendar = Calendar.current
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
-        
-        // 解析第一周周一的日期
-        guard let startDateString = viewModel.scheduleData?.week1Monday.prefix(10),
-              let startDate = formatter.date(from: String(startDateString)) else {
-            return ("", "")
-        }
-        
-        // 计算偏移量：(周数-1)*7 + (礼拜几-1)
-        let offsetDays = (weekToShow - 1) * 7 + dayIndex
-        if let targetDate = calendar.date(byAdding: .day, value: offsetDays, to: startDate) {
-            let day = calendar.component(.day, from: targetDate)
-            let month = calendar.component(.month, from: targetDate)
-            return ("\(month)", "\(day)")
+        guard let startStr = viewModel.scheduleData?.week1Monday.prefix(10),
+              let startDate = formatter.date(from: String(startStr)) else { return ("", "") }
+        let offset = (weekToShow - 1) * 7 + dayIndex
+        if let targetDate = calendar.date(byAdding: .day, value: offset, to: startDate) {
+            return ("\(calendar.component(.month, from: targetDate))", "\(calendar.component(.day, from: targetDate))")
         }
         return ("", "")
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            // 头部：显示月份和日期数字
+            // 头部日期栏
             HStack(spacing: 0) {
-                // 左上角月份显示
-                Text("\(getDate(for: 0).month)\n月")
-                    .font(.system(size: 11, weight: .medium))
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.secondary)
-                    .frame(width: 45)
-                
-                ForEach(0..<7, id: \.self) { index in
-                    let dayNames = ["一", "二", "三", "四", "五", "六", "日"]
-                    let dateInfo = getDate(for: index)
-                    
+                Text("\(getDate(for: 0).month)\n月").font(.system(size: 11)).foregroundColor(.secondary).frame(width: 45)
+                ForEach(0..<7, id: \.self) { i in
                     VStack(spacing: 2) {
-                        Text(dayNames[index])
-                            .font(.system(size: 14, weight: .medium))
-                        Text(dateInfo.day)
-                            .font(.system(size: 10))
-                            .foregroundColor(.secondary)
+                        Text(["一","二","三","四","五","六","日"][i]).font(.system(size: 14, weight: .medium))
+                        Text(getDate(for: i).day).font(.system(size: 10)).foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity)
-                    .background(isToday(dayIndex: index) ? Color.secondary.opacity(0.1) : Color.clear)
-                    .cornerRadius(4)
+                    .background(isToday(dayIndex: i) ? Color.secondary.opacity(0.1) : Color.clear).cornerRadius(4)
                 }
             }
             .padding(.bottom, 10)
-            
-            ScrollView {
+
+            ScrollView(showsIndicators: false) {
                 HStack(alignment: .top, spacing: 0) {
-                    // --- 左侧时间/节数栏 ---
+                    // 左侧节数时间轴
                     VStack(spacing: 0) {
                         ForEach(1...12, id: \.self) { i in
                             VStack {
@@ -221,42 +302,28 @@ struct ScheduleGrid: View {
                             }
                             .frame(width: 45, height: hourHeight)
                             .foregroundColor(.gray)
-                            // 分段背景色设置
-                            .background(
-                                Group {
-                                    if i >= 1 && i <= 4 {
-                                        Color.green.opacity(0.12) // 1-4节：绿色
-                                    } else if i >= 5 && i <= 8 {
-                                        Color.blue.opacity(0.12)  // 5-8节：蓝色
-                                    } else if i >= 9 && i <= 12 {
-                                        Color.purple.opacity(0.12)// 9-12节：紫色
-                                    } else {
-                                        Color.clear
-                                    }
-                                }
-                            )
+                            .background(i <= 4 ? Color.green.opacity(0.08) : (i <= 8 ? Color.blue.opacity(0.08) : Color.purple.opacity(0.08)))
                         }
                     }
-                    
-                    // --- 右侧课程格子区域 ---
+
+                    // 右侧课程格子
                     GeometryReader { geo in
                         let colW = geo.size.width / 7
                         ZStack(alignment: .topLeading) {
-                            // 绘制背景横线
+                            // 背景横线
                             ForEach(0...12, id: \.self) { i in
                                 Path { p in
                                     p.move(to: .init(x: 0, y: CGFloat(i)*hourHeight))
                                     p.addLine(to: .init(x: geo.size.width, y: CGFloat(i)*hourHeight))
-                                }
-                                .stroke(Color.gray.opacity(0.1), lineWidth: 0.5)
+                                }.stroke(Color.gray.opacity(0.1), lineWidth: 0.5)
                             }
-                            
-                            // 渲染课程块
+
                             let courses = viewModel.scheduleData?.instances.filter { $0.week == weekToShow } ?? []
                             ForEach(courses) { course in
+                                let geoInfo = calculateGeometry(for: course)
                                 CourseBlock(viewModel: viewModel, course: course)
-                                    .frame(width: colW - 2, height: CGFloat(course.periods.count) * hourHeight - 2)
-                                    .offset(x: CGFloat(course.day-1)*colW + 1, y: CGFloat(course.periods.first!-1)*hourHeight + 1)
+                                    .frame(width: colW - 2, height: geoInfo.height - 2)
+                                    .offset(x: CGFloat(course.day-1)*colW + 1, y: geoInfo.y + 1)
                                     .onTapGesture { detailAction(course) }
                             }
                         }
@@ -266,63 +333,71 @@ struct ScheduleGrid: View {
             }
         }
     }
-    
-    // 辅助函数：判断是否为正在显示的这一天
+
     private func isToday(dayIndex: Int) -> Bool {
-        guard viewModel.isCurrentWeekReal && weekToShow == viewModel.selectedWeek else {
-            return false
-        }
-        let calendar = Calendar.current
-        let weekday = calendar.component(.weekday, from: Date())
-        // 将系统 weekday (周日1, 周一2...) 转换为 0-6 (周一0...周日6)
-        let normalizedTodayIndex = (weekday + 5) % 7
-        return dayIndex == normalizedTodayIndex
+        guard viewModel.isCurrentWeekReal && weekToShow == viewModel.selectedWeek else { return false }
+        let weekday = Calendar.current.component(.weekday, from: Date())
+        return dayIndex == (weekday + 5) % 7
     }
 }
+
 // MARK: - 课程块
 struct CourseBlock: View {
-    @ObservedObject var viewModel: ScheduleViewModel // 引入观察，以便获取课程总数和索引
+    @ObservedObject var viewModel: ScheduleViewModel
     let course: CourseInstance
-    
+    @Environment(\.colorScheme) var colorScheme
+
     var body: some View {
-        // 1. 获取当前课程在总名单中的索引
-        let colorIndex = viewModel.courseColorMap[course.course] ?? 0
-        // 2. 获取本学期总课程数
-        let totalCourses = viewModel.courseColorMap.count
+        let isExam = course.type.contains("考试")
         
-        ZStack {
-                    VStack(spacing: 0) {
-                        Spacer()
-                        
-                        // 1. 课程名称
-                        Text(course.course)
-                            .font(.system(size: 14, weight: .bold)) // 稍微调小一点适配小格子
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true) // 允许换行
-                        
-                        Text("").frame(height: 4)
-                        
-                        // 2. 上课地点
-                        Text(course.location)
-                            .font(.system(size: 14))
-                            .multilineTextAlignment(.center)
-                        
-                        // 3. 黄色五角星：移动到地点下方
-                        if course.type != "常规" {
-                            Image(systemName: "star.fill")
-                                .font(.system(size: 12))
-                                .foregroundColor(.yellow)
-                                .padding(.top, 2)
-                        }
-                        
-                        Spacer()
-                    }
-                    .padding(2)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.dynamicCourseColor(index: colorIndex, total: totalCourses))
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-                }
+        let backgroundColor: Color = {
+            if isExam {
+                return colorScheme == .dark ? .white : .black
+            } else {
+                // 使用优化过的排序索引颜色，避免刷新变色
+                let colorIndex = viewModel.courseColorMap[course.course] ?? 0
+                return Color.dynamicCourseColor(index: colorIndex)
+            }
+        }()
+
+        let textColor: Color = isExam ? (colorScheme == .dark ? .black : .white) : .white
+
+        VStack(spacing: 2) {
+            Spacer(minLength: 1)
+            Text(course.course)
+                .font(.system(size: 14, weight: .bold))
+                .multilineTextAlignment(.center)
+                .lineLimit(3)
+                .minimumScaleFactor(0.8)
+            
+            Text(course.location)
+                .font(.system(size: 14))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .opacity(0.9)
+            
+            if course.type != "常规" {
+                Image(systemName: isExam ? "pencil.and.outline" : "star.fill")
+                    .font(.system(size: 10))
+                    .foregroundColor(isExam ? .orange : .yellow)
+            }
+            Spacer(minLength: 1)
+        }
+        .padding(.horizontal, 2)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(backgroundColor)
+        .foregroundColor(textColor)
+        .cornerRadius(6)
+        .shadow(color: Color.black.opacity(0.05), radius: 1, x: 0, y: 1)
+    }
+}
+
+// 建议同步更新 Color 扩展（黄金分割法防止变红变蓝）
+extension Color {
+    static func dynamicCourseColor(index: Int) -> Color {
+        let goldenRatio = 0.618033988749895
+        let hue = (Double(index) * goldenRatio).truncatingRemainder(dividingBy: 1.0)
+        return Color(hue: hue, saturation: 0.65, brightness: 0.75)
     }
 }
 
