@@ -28,7 +28,7 @@ class ScheduleViewModel: ObservableObject {
     var isCurrentWeekReal: Bool {
         let real = calculateCurrentRealWeek()
         // 处理开学前的边界：如果还没开学，通常第1周就是他们的“本周”
-        let expected = real <= 0 ? 1 : min(real, 20)
+        let expected = real <= 0 ? 0 : min(real, 20)
         return selectedWeek == expected
     }
 
