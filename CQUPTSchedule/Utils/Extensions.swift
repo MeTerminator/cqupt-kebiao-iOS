@@ -6,9 +6,11 @@ extension Color {
     static func dynamicCourseColor(index: Int, total: Int) -> Color {
         guard total > 0 else { return .blue }
         
-        // 使用质数步长跳跃选色，避免色环上相邻的颜色太像
+        // 修复点：先取模再运算，防止 index * step 溢出
+        let safeIndex = abs(index) % total
         let step = 7
-        let steppedIndex = (index * step) % total
+        let steppedIndex = (safeIndex * step) % total
+        
         let hue = Double(steppedIndex) / Double(total)
         
         // 亮度 0.6 确保白色文字清晰

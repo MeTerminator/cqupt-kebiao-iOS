@@ -24,7 +24,7 @@ struct ContentView: View {
                 if isLoggedIn {
                     VStack(spacing: 0) {
                         // 顶部操作栏
-                        HeaderView(viewModel: viewModel, showUser: $showUserSheet, showCalendarSheet: $showCalendarSheet)
+                        HeaderView(viewModel: viewModel, showUser: $showUserSheet)
                         
                         // 分周滑动视图
                         TabView(selection: $viewModel.selectedWeek) {
@@ -43,13 +43,10 @@ struct ContentView: View {
                         CourseDetailView(course: course, courseDate: calculateDate(week: course.week, day: course.day))
                     }
                     .sheet(isPresented: $showUserSheet) {
-                        UserDetailView(viewModel: viewModel) {
+                        UserDetailView(viewModel: viewModel, showCalendarSheet: $showCalendarSheet) {
                             isLoggedIn = false
                             savedId = ""
                         }
-                    }
-                    .sheet(isPresented: $showCalendarSheet) {
-                        CalendarExportView(viewModel: viewModel)
                     }
                     .onAppear { viewModel.startup(studentId: savedId) }
                 } else {
@@ -66,7 +63,7 @@ struct ContentView: View {
             if viewModel.showToast {
                 ToastView(message: viewModel.toastMessage)
                     .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
-                    .zIndex(10)
+                    .zIndex(10000)
             }
         }
     }

@@ -104,7 +104,7 @@ struct ScheduleGrid: View {
                                 }.stroke(Color.gray.opacity(0.1), lineWidth: 0.5)
                             }
 
-                            let courses = viewModel.scheduleData?.instances.filter { $0.week == weekToShow } ?? []
+                            let courses = viewModel.allCourses(for: weekToShow)
                             ForEach(courses) { course in
                                 let geoInfo = calculateGeometry(for: course)
                                 CourseBlock(viewModel: viewModel, course: course)

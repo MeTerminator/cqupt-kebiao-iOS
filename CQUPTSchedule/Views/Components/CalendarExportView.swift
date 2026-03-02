@@ -78,7 +78,7 @@ struct CalendarExportView: View {
                 }
             }
             .navigationTitle("日历同步")
-            .navigationBarItems(leading: Button("取消") { pm.wrappedValue.dismiss() })
+//            .navigationBarItems(leading: Button("取消") { pm.wrappedValue.dismiss() })
         }
     }
 }

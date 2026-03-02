@@ -1,10 +1,3 @@
-//
-//  Models.swift
-//  CQUPTSchedule
-//
-//  Created by MeTerminator on 2026/2/25.
-//
-
 import Foundation
 
 struct ScheduleResponse: Codable {
@@ -28,7 +21,7 @@ struct ScheduleResponse: Codable {
 struct CourseInstance: Codable, Identifiable {
     var id = UUID()
     let course: String
-    let teacher: String
+    let teacher: String?
     let week: Int
     let day: Int
     let periods: [Int]
@@ -36,27 +29,54 @@ struct CourseInstance: Codable, Identifiable {
     let endTime: String
     let location: String
     let type: String
+    let courseType: String?
+    let credit: String?
+    let description: String?
+    var colorIndex: Int?
     
     enum CodingKeys: String, CodingKey {
         case course, teacher, week, day, periods, location, type
         case startTime = "start_time"
         case endTime = "end_time"
+        case courseType = "course_type"
+        case credit, description
+        case colorIndex // 如果后端不返回这个字段，Codable 会自动设为 nil
     }
 }
 
-let timeTable = [
-    1: ["begin": "08:00", "end": "08:45"],
-    2: ["begin": "08:55", "end": "09:40"],
-    3: ["begin": "10:15", "end": "11:00"],
-    4: ["begin": "11:10", "end": "11:55"],
+struct CustomCourse: Codable, Identifiable {
+    var id = UUID()
+    var title: String
+    var location: String
+    var description: String
+    var colorIndex: Int
+    var week: Int
+    var day: Int
+    var startPeriod: Int
+    var endPeriod: Int
     
-    5: ["begin": "14:00", "end": "14:45"],
-    6: ["begin": "14:55", "end": "15:40"],
-    7: ["begin": "16:15", "end": "17:00"],
-    8: ["begin": "17:10", "end": "17:55"],
-    
-    9: ["begin": "19:00", "end": "19:45"],
-    10: ["begin": "19:55", "end": "20:40"],
-    11: ["begin": "20:50", "end": "21:35"],
-    12: ["begin": "21:45", "end": "22:30"],
-]
+    func toInstance() -> CourseInstance {
+        let periods = Array(startPeriod...endPeriod)
+        
+        // 获取真实时间字符串
+        let startT = timeTable[startPeriod]?["begin"] ?? "08:00"
+        let endT = timeTable[endPeriod]?["end"] ?? "08:45"
+        
+        return CourseInstance(
+            id: self.id,
+            course: title,
+            teacher: "",
+            week: week,
+            day: day,
+            periods: periods,
+            startTime: startT,
+            endTime: endT,
+            location: location,
+            type: "自定义行程",
+            courseType: "自定义行程",
+            credit: nil,
+            description: description,
+            colorIndex: self.colorIndex
+        )
+    }
+}

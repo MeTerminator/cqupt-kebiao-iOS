@@ -4,7 +4,8 @@ import SwiftUI
 struct HeaderView: View {
     @ObservedObject var viewModel: ScheduleViewModel
     @Binding var showUser: Bool
-    @Binding var showCalendarSheet: Bool
+    
+    @State private var showAddCustomSheet = false
     
     var body: some View {
         HStack {
@@ -50,9 +51,14 @@ struct HeaderView: View {
                     .transition(.scale.combined(with: .opacity))
                 }
 
-                Button(action: { showCalendarSheet = true }) {
-                    Image(systemName: "calendar.badge.plus").font(.system(size: 20))
-                }
+                Button(action: {  showAddCustomSheet = true }) {
+                     Image(systemName: "plus.circle.fill") // 换个显眼的图标
+                         .font(.system(size: 22))
+                         .foregroundColor(.accentColor)
+                 }
+                 .sheet(isPresented: $showAddCustomSheet) {
+                     AddCustomCourseView(viewModel: viewModel)
+                 }
                 
                 Button(action: { viewModel.refreshData() }) {
                     Image(systemName: "arrow.clockwise")

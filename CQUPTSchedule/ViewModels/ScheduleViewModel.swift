@@ -4,6 +4,7 @@ import SwiftUI
 
 class ScheduleViewModel: ObservableObject {
     @Published var scheduleData: ScheduleResponse?
+    @Published var customCourses: [CustomCourse] = []
     @Published var isLoading = false
     @Published var selectedWeek: Int = 1
     
@@ -15,6 +16,7 @@ class ScheduleViewModel: ObservableObject {
     private var firstMondayDate: Date?
     private var refreshTimer: AnyCancellable?
     private var currentId: String = ""
+    private let kCustomCoursesKey = "cloud_custom_courses"
     
     // 缓存路径
     private var cacheURL: URL {
@@ -51,6 +53,16 @@ class ScheduleViewModel: ObservableObject {
         refreshTimer = Timer.publish(every: 600, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in self?.refreshData(silent: true) }
+            
+        loadCustomCourses()
+        
+        // 监听 iCloud 数据变化（当在其他设备修改时）
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(iCloudDataDidUpdate),
+            name: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            object: NSUbiquitousKeyValueStore.default
+        )
     }
     
     func startup(studentId: String) {
@@ -152,8 +164,75 @@ class ScheduleViewModel: ObservableObject {
         }
     }
 
-    // MARK: - 外部工具
+    func addCustomCourse(_ course: CustomCourse) {
+        objectWillChange.send() // 显式通知 UI 刷新
+        customCourses.append(course)
+        saveCustomCourses()
+        triggerToast(msg: "行程已添加")
+    }
     
+    func updateCustomCourse(_ course: CustomCourse) {
+        if let index = customCourses.firstIndex(where: { $0.id == course.id }) {
+            objectWillChange.send()
+            customCourses[index] = course
+            saveCustomCourses()
+            triggerToast(msg: "行程已更新")
+        }
+    }
+
+    // 顺便补一个 onDelete 用的删除方法
+    func deleteCustomCourse(at offsets: IndexSet) {
+        customCourses.remove(atOffsets: offsets)
+        saveCustomCourses()
+    }
+    
+    func clearAllCustomCourses() {
+        customCourses.removeAll()
+        saveCustomCourses()
+        triggerToast(msg: "自定义行程已清空")
+    }
+    
+    private func saveCustomCourses() {
+        if let data = try? JSONEncoder().encode(customCourses) {
+            // 1. 同时存入 UserDefaults 作为本地立即生效的缓存
+            UserDefaults.standard.set(data, forKey: kCustomCoursesKey)
+            
+            // 2. 存入 iCloud 做多端同步
+            NSUbiquitousKeyValueStore.default.set(data, forKey: kCustomCoursesKey)
+            NSUbiquitousKeyValueStore.default.synchronize()
+        }
+    }
+
+    private func loadCustomCourses() {
+        // 优先从本地 UserDefaults 读取，速度最快
+        if let data = UserDefaults.standard.data(forKey: kCustomCoursesKey) ??
+                      NSUbiquitousKeyValueStore.default.data(forKey: kCustomCoursesKey) {
+            if let decoded = try? JSONDecoder().decode([CustomCourse].self, from: data) {
+                self.customCourses = decoded
+            }
+        }
+    }
+    
+    @objc private func iCloudDataDidUpdate() {
+        DispatchQueue.main.async {
+            self.loadCustomCourses()
+        }
+    }
+    
+    // 获取指定周的所有课程（API + 自定义）
+    func allCourses(for week: Int) -> [CourseInstance] {
+        let apiList = (scheduleData?.instances ?? []).filter { $0.week == week }
+        
+        // 筛选出本周的自定义课程并转换
+        let customList = customCourses
+            .filter { $0.week == week }
+            .map { $0.toInstance() }
+        
+        // 合并两部分数据
+        return apiList + customList
+    }
+
+    // MARK: - 外部工具
     func exportToCalendar(firstAlert: Int?, secondAlert: Int?, calendarName: String) {
         CalendarManager.shared.requestAccess { granted in
             if granted {

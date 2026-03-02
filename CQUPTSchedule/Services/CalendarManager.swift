@@ -68,7 +68,7 @@ class CalendarManager {
             }
             
             event.location = instance.location
-            event.notes = "教师: \(instance.teacher)\n类型: \(instance.type)\n周数: 第\(instance.week)周"
+            event.notes = "教师: \(instance.teacher ?? "无")\n类型: \(instance.type)\n周数: 第\(instance.week)周"
 
             let daysOffset = (instance.week - 1) * 7 + (instance.day - 1)
             guard let baseDate = Calendar.current.date(byAdding: .day, value: daysOffset, to: firstMonday) else { continue }
