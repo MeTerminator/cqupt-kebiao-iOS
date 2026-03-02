@@ -239,8 +239,12 @@ class ScheduleViewModel: ObservableObject {
                 self.isLoading = true
                 DispatchQueue.global(qos: .userInitiated).async {
                     do {
+                        let apiInstances = self.scheduleData?.instances ?? []
+                        let customInstances = self.customCourses.map { $0.toInstance() }
+                        let allInstances = apiInstances + customInstances
+                 
                         try CalendarManager.shared.syncCourses(
-                            instances: self.scheduleData?.instances ?? [],
+                            instances: allInstances,
                             startDateStr: self.scheduleData?.week1Monday ?? "",
                             firstAlert: firstAlert, secondAlert: secondAlert,
                             calendarName: calendarName
