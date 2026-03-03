@@ -91,7 +91,7 @@ class CalendarManager {
             } else if instance.type == "冲突" {
                 event.location = instance.location
                 if let desc = instance.description, !desc.isEmpty {
-                    notesArray.append(desc)
+                    notesArray.append(desc.replacingOccurrences(of: "\\n", with: "\n"))
                 }
             } else {
                 // 普通课程或自定义行程
@@ -107,7 +107,7 @@ class CalendarManager {
             // --- 追加备注 Description ---
             // 只有当 description 不为空，且不是冲突类型（避免重复）时才添加
             if let extraDesc = instance.description, !extraDesc.isEmpty, instance.type != "冲突" {
-                notesArray.append("备注: \(extraDesc)")
+                notesArray.append("备注: \(extraDesc.replacingOccurrences(of: "\\n", with: "\n"))")
             }
             
             // 将所有非空行合并

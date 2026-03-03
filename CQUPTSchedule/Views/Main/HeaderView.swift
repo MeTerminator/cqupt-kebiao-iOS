@@ -45,7 +45,7 @@ struct HeaderView: View {
                         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     }) {
                         Image(systemName: "arrow.uturn.backward.circle.fill")
-                            .font(.system(size: 20))
+                            .font(.system(size: 24))
                             .foregroundColor(.orange)
                     }
                     .transition(.scale.combined(with: .opacity))
@@ -53,7 +53,7 @@ struct HeaderView: View {
 
                 Button(action: {  showAddCustomSheet = true }) {
                      Image(systemName: "plus.circle.fill") // 换个显眼的图标
-                         .font(.system(size: 22))
+                         .font(.system(size: 24))
                          .foregroundColor(.accentColor)
                  }
                  .sheet(isPresented: $showAddCustomSheet) {
@@ -62,7 +62,7 @@ struct HeaderView: View {
                 
                 Button(action: { viewModel.refreshData() }) {
                     Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 20))
+                        .font(.system(size: 24))
                         .rotationEffect(.degrees(viewModel.isLoading ? 360 : 0))
                 }
                 
