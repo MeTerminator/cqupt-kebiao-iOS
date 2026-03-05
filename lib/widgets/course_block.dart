@@ -7,11 +7,7 @@ class CourseBlock extends StatelessWidget {
   final ScheduleViewModel viewModel;
   final CourseInstance course;
 
-  const CourseBlock({
-    super.key,
-    required this.viewModel,
-    required this.course,
-  });
+  const CourseBlock({super.key, required this.viewModel, required this.course});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +19,8 @@ class CourseBlock extends StatelessWidget {
     final bool noOngoingAnywhere = !viewModel.hasAnyCourseOngoing();
     final nextUpcoming = viewModel.getNextUpcomingCourseGlobal();
 
-    final bool shouldHighlight = noOngoingAnywhere &&
+    final bool shouldHighlight =
+        noOngoingAnywhere &&
         nextUpcoming != null &&
         nextUpcoming.id == course.id &&
         nextUpcoming.week == course.week &&
@@ -35,22 +32,30 @@ class CourseBlock extends StatelessWidget {
     if (isExam) {
       backgroundColor = isDark ? Colors.white : Colors.black;
     } else if (isCustom) {
-      backgroundColor = ColorExtensions.dynamicCourseColor(index: course.colorIndex ?? 0, total: 10);
+      backgroundColor = ColorExtensions.dynamicCourseColor(
+        index: course.colorIndex ?? 0,
+        total: 10,
+      );
     } else {
       final colorIndex = viewModel.courseColorMap[course.course] ?? 0;
-      backgroundColor = ColorExtensions.dynamicCourseColor(index: colorIndex, total: 20);
+      backgroundColor = ColorExtensions.dynamicCourseColor(
+        index: colorIndex,
+        total: 20,
+      );
     }
 
     // 2. 基础文字颜色逻辑：
     // 如果是考试块：文字颜色要和背景反色（白天背景黑->文字白；黑夜背景白->文字黑）
     // 如果是常规块：文字统一白色
-    final Color baseTextColor = isExam 
-        ? (isDark ? Colors.black : Colors.white) 
+    final Color baseTextColor = isExam
+        ? (isDark ? Colors.black : Colors.white)
         : Colors.white;
 
     // 3. 标签（红色部分）在考试块背景下的适配：
     // 在深色背景上用浅红，在浅色背景（黑夜考试块）上用深红，保证可读性
-    final Color tagColor = (isExam && isDark) ? Colors.redAccent.shade700 : Colors.redAccent;
+    final Color tagColor = (isExam && isDark)
+        ? Colors.redAccent.shade700
+        : Colors.redAccent;
 
     if (shouldHighlight) {
       backgroundColor = backgroundColor.withOpacity(0.85);
@@ -89,9 +94,9 @@ class CourseBlock extends StatelessWidget {
         return TextSpan(
           text: fullTitle,
           style: TextStyle(
-            color: baseTextColor, 
-            fontWeight: FontWeight.bold, 
-            fontSize: 14
+            color: baseTextColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
           ),
         );
       }
@@ -103,7 +108,10 @@ class CourseBlock extends StatelessWidget {
         color: backgroundColor,
         borderRadius: BorderRadius.circular(8),
         border: isCustom
-            ? Border.all(color: isDark ? Colors.white70 : Colors.black54, width: 2)
+            ? Border.all(
+                color: isDark ? Colors.white70 : Colors.black54,
+                width: 2,
+              )
             : null,
       ),
       child: ClipRRect(
@@ -119,16 +127,8 @@ class CourseBlock extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Spacer(),
-                  if (isOngoing)
-                    _buildProgressIndicator(viewModel.getCourseProgress(course))
-                  else if (shouldHighlight)
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 6),
-                      child: Icon(Icons.access_time_filled, size: 16, color: Colors.white),
-                    )
-                  else
-                    const SizedBox(height: 18),
-                  
+
+                  // 2. 课程名称
                   Text.rich(
                     getFormattedTitle(course.course),
                     textAlign: TextAlign.center,
@@ -136,8 +136,9 @@ class CourseBlock extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(height: 1.2),
                   ),
-                  
+
                   const SizedBox(height: 4),
+                  // 3. 课程地点
                   Text(
                     course.location,
                     textAlign: TextAlign.center,
@@ -149,6 +150,37 @@ class CourseBlock extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
+
+                  // 1. 进度/高亮图标区域
+                  if (isOngoing)
+                    _buildProgressIndicator(viewModel.getCourseProgress(course))
+                  else if (shouldHighlight)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6),
+                      child: Icon(
+                        Icons.access_time_filled,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    )
+                  else if (course.type != "常规")
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Icon(
+                        course.type == "冲突"
+                            ? Icons.warning_rounded
+                            : (isExam
+                                  ? Icons.edit_note_rounded
+                                  : Icons.stars_rounded),
+                        size: 16, // 对应 SwiftUI size 12，但在 Flutter 16 视觉更接近
+                        color: course.type == "考试"
+                            ? Colors.orange
+                            : Colors.yellow,
+                      ),
+                    )
+                  else
+                    const SizedBox(),
+
                   const Spacer(),
                 ],
               ),
@@ -198,7 +230,7 @@ class CourseBlock extends StatelessWidget {
 
   Widget _buildProgressIndicator(double progress) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(top: 6),
       child: SizedBox(
         width: 18,
         height: 18,
