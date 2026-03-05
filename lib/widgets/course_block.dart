@@ -137,7 +137,7 @@ class CourseBlock extends StatelessWidget {
                     style: const TextStyle(height: 1.2),
                   ),
 
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   // 3. 课程地点
                   Text(
                     course.location,
@@ -148,6 +148,7 @@ class CourseBlock extends StatelessWidget {
                       fontSize: 14,
                       color: baseTextColor.withOpacity(0.8),
                       fontWeight: FontWeight.w500,
+                      height: 1.1,
                     ),
                   ),
 

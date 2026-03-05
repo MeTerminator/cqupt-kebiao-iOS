@@ -21,7 +21,7 @@ class ScheduleGrid extends StatelessWidget {
     required this.onCourseTap,
   });
 
-  double get hourHeight => 70;
+  double get hourHeight => 80;
 
   int toMinutes(String timeStr) {
     final parts = timeStr.split(':');
