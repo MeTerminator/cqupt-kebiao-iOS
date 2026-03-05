@@ -21,9 +21,6 @@ class UserDetailView extends StatefulWidget {
 }
 
 class _UserDetailViewViewState extends State<UserDetailView> {
-  final CalendarService _calendarService = CalendarService();
-  bool _isSyncing = false;
-
   String getChineseDay(int day) {
     const days = ['一', '二', '三', '四', '五', '六', '日'];
     return (day >= 1 && day <= 7) ? days[day - 1] : '';
@@ -51,50 +48,57 @@ class _UserDetailViewViewState extends State<UserDetailView> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 顶部指示条
-                Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+    return DraggableScrollableSheet(
+      initialChildSize: 0.92,
+      minChildSize: 0.5,
+      maxChildSize: 0.92,
+      expand: false,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // 顶部指示条（作为拖动把手）
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
+              ),
+              
+              // 标题栏
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '用户详情',
+                      style: Theme.of(context).textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 内容区域：必须使用传入的 scrollController
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '用户详情',
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.close),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      
                       // 1. 个人信息
                       _buildSection(context, '个人信息', [
                         _buildRow(context, '姓名', widget.viewModel.scheduleData?.studentName ?? ''),
@@ -121,7 +125,9 @@ class _UserDetailViewViewState extends State<UserDetailView> {
                             ),
                           )
                         else ...[
-                          ...widget.viewModel.customCourses.asMap().entries.map((entry) => _buildCustomCourseRow(context, entry.value, entry.key)),
+                          ...widget.viewModel.customCourses.asMap().entries.map(
+                            (entry) => _buildCustomCourseRow(context, entry.value, entry.key),
+                          ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             child: SizedBox(
@@ -140,11 +146,11 @@ class _UserDetailViewViewState extends State<UserDetailView> {
                       ]),
                       const SizedBox(height: 16),
 
-                      // 4. 系统同步 (点击触发美化后的导出 View)
+                      // 4. 系统同步
                       _buildSection(context, '系统同步', [
                         _buildSyncCalendarRow(context),
                       ]),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
 
                       // 5. 退出登录
                       SizedBox(
@@ -163,34 +169,29 @@ class _UserDetailViewViewState extends State<UserDetailView> {
                           child: const Text('退出登录'),
                         ),
                       ),
-                      const SizedBox(height: 30),
+                      
+                      const SizedBox(height: 32),
+                      // --- 版权与项目信息 ---
+                      _buildFooterInfo(context),
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  /// 唤起美化后的同步底部弹窗
   void _showCalendarSyncSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => CalendarExportView(
-        viewModel: widget.viewModel,
-        // 这里可以直接在 CalendarExportView 内部点击“立即同步”时回调回来，
-        // 或者直接在 CalendarExportView 中处理逻辑。
-        // 为了保持逻辑内聚，我们将同步逻辑直接写在 CalendarExportView 的 handle 中。
-      ),
+      builder: (context) => CalendarExportView(viewModel: widget.viewModel),
     );
   }
-
-  // --- UI 构建辅助方法 ---
 
   Widget _buildSection(BuildContext context, String title, List<Widget> children) {
     return Column(
@@ -238,15 +239,12 @@ class _UserDetailViewViewState extends State<UserDetailView> {
       ),
       child: InkWell(
         onTap: () {
-          Navigator.pop(context); // 关闭详情页
+          Navigator.pop(context); 
           showModalBottomSheet(
             context: context,
             isScrollControlled: true,
             backgroundColor: Colors.transparent,
-            builder: (context) => AddCustomCourseView(
-              viewModel: widget.viewModel,
-              editingCourse: item,
-            ),
+            builder: (context) => AddCustomCourseView(viewModel: widget.viewModel, editingCourse: item),
           );
         },
         child: Padding(
@@ -291,12 +289,24 @@ class _UserDetailViewViewState extends State<UserDetailView> {
           children: [
             const Icon(Icons.calendar_month, size: 20, color: Colors.blueAccent),
             const SizedBox(width: 12),
-            const Expanded(
-              child: Text('导出到系统日历', style: TextStyle(fontWeight: FontWeight.w500)),
-            ),
+            const Expanded(child: Text('导出到系统日历', style: TextStyle(fontWeight: FontWeight.w500))),
             Icon(Icons.chevron_right, size: 20, color: Colors.grey[400]),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFooterInfo(BuildContext context) {
+    return Center(
+      child: Column(
+        children: [
+          Text('GitHub: MeTerminator/cqupt-schedule-app', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+          const SizedBox(height: 6),
+          Text('反馈QQ群：1051832310', style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+          const SizedBox(height: 12),
+          Text('© 2026 MeTerminator', style: TextStyle(fontSize: 11, color: Colors.grey[400], fontWeight: FontWeight.w300)),
+        ],
       ),
     );
   }
