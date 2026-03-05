@@ -1,6 +1,6 @@
-# cqupt_schedule_app
+# 重邮课表 App
 
-A new Flutter project.
+支持 Android & iOS，由 Flutter 开发。
 
 ## Getting Started
 
