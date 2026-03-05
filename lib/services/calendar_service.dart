@@ -1,6 +1,6 @@
 import 'package:device_calendar/device_calendar.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter/material.dart' show Color;
+import 'package:flutter/material.dart' show Color, debugPrint;
 import 'package:timezone/timezone.dart' as tz;
 import '../models/schedule_model.dart';
 import 'dart:io';
@@ -26,7 +26,6 @@ class CalendarService {
   Future<Calendar?> getOrCreateCalendar(String calendarName) async {
     final finalName = calendarName.trim().isEmpty ? '重邮课表' : calendarName.trim();
     
-    // 检查权限
     if (!(await hasPermissions())) {
       if (!(await requestPermissions())) return null;
     }
@@ -39,17 +38,35 @@ class CalendarService {
       }
     }
 
-    // 2. 创建新日历 (对齐 Swift 的 saveCalendar)
+    // 2. 创建新日历
+    // Android 注意：localAccountName 在不同机型上表现不同，'Phone' 或 null 最为稳妥
     var result = await _deviceCalendarPlugin.createCalendar(
       finalName,
       calendarColor: const Color(0xFF3498DB),
-      localAccountName: Platform.isIOS ? null : 'CQUPT_Account', 
+      localAccountName: Platform.isIOS ? null : 'Phone', 
     );
 
     if (result.isSuccess && result.data != null) {
-      final calendarsNow = await _deviceCalendarPlugin.retrieveCalendars();
-      return calendarsNow.data?.firstWhere((c) => c.id == result.data);
+      // Android 刚创建完立即查询可能会因为系统同步延迟导致 data 为空
+      // 增加一次重试逻辑
+      for (int i = 0; i < 3; i++) {
+        if (i > 0) await Future.delayed(const Duration(milliseconds: 200));
+        
+        final calendarsNow = await _deviceCalendarPlugin.retrieveCalendars();
+        if (calendarsNow.isSuccess && calendarsNow.data != null) {
+          // --- 关键修复：使用 where 替代 firstWhere，避免 "No element" 崩溃 ---
+          final matches = calendarsNow.data!.where((c) => c.id == result.data);
+          if (matches.isNotEmpty) {
+            return matches.first;
+          }
+        }
+      }
+      
+      // 如果重试多次还是检索不到（极少见），手动返回一个对象，防止后续流程报错
+      return Calendar(id: result.data, name: finalName, isReadOnly: false);
     }
+    
+    debugPrint("日历创建失败: ${result.errors.map((e) => e.errorMessage).join(', ')}");
     return null;
   }
 
@@ -100,7 +117,6 @@ class CalendarService {
         end: tz.TZDateTime.from(endDt, tz.local),
       );
 
-      // 提醒设置
       final reminders = <Reminder>[];
       if (firstAlertMinutes != null && firstAlertMinutes > 0) {
         reminders.add(Reminder(minutes: firstAlertMinutes));
