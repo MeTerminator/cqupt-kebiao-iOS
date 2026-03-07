@@ -66,8 +66,8 @@ struct TodayCourseWidgetEntryView : View {
             // 这个最后的 Spacer 会将上方所有的内容“顶”到屏幕最上方
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10) // 微调上下边距，使顶部对齐看起来更自然
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
     }
 }
 
@@ -92,6 +92,8 @@ struct HeaderView: View {
 struct CourseRow: View {
     let course: CourseInstance
     var body: some View {
+        let teacherStr = (course.teacher?.isEmpty == false) ? course.teacher! : ""
+        
         HStack(spacing: 8) {
             // 1. 左侧彩色条
             Capsule()
@@ -103,7 +105,7 @@ struct CourseRow: View {
                 Text(course.course)
                     .font(.system(size: 14, weight: .bold))
                     .lineLimit(1)
-                Text(course.location)
+                Text("\(course.location)  \(teacherStr)")
                     .font(.system(size: 14))
                     .lineLimit(1)
             }
