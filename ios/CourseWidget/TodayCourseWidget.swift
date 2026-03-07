@@ -1,12 +1,7 @@
 import WidgetKit
 import SwiftUI
 
-// MARK: - Entry
 
-// MARK: - 数据提供者
-
-
-// MARK: - UI 布局
 struct TodayCourseWidgetEntryView : View {
     @Environment(\.widgetFamily) var family
     var entry: Provider.Entry
