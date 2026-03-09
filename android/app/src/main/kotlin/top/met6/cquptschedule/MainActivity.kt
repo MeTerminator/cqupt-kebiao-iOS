@@ -1,4 +1,4 @@
-package com.example.cqupt_schedule_app
+package top.met6.cquptschedule
 
 import io.flutter.embedding.android.FlutterActivity
 

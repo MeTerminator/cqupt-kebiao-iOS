@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:orientation="vertical"
+    android:paddingTop="8dp"
+    android:paddingBottom="12dp"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="2dp">
+        <TextView
+            android:id="@+id/tv_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:textColor="#888888"
+            android:textSize="13sp" />
+        <TextView
+            android:id="@+id/tv_week"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:textColor="#333333"
+            android:textSize="13sp" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <FrameLayout
+                    android:layout_width="4dp"
+                    android:layout_height="match_parent"
+                    android:background="#FFCC00" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingLeft="8dp">
+                    <TextView
+                        android:id="@+id/tv_current_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="今日无课程"
+                        android:textStyle="bold"
+                        android:textColor="#000000"
+                        android:textSize="15sp"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+                    <TextView
+                        android:id="@+id/tv_current_loc"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#333333"
+                        android:textSize="12sp"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+                    <TextView
+                        android:id="@+id/tv_current_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#888888"
+                        android:textSize="11sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/divider_line"
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#EEEEEE"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp" />
+
+        <LinearLayout
+            android:id="@+id/layout_next_course"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <FrameLayout
+                    android:layout_width="4dp"
+                    android:layout_height="match_parent"
+                    android:background="#FF9500" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingLeft="8dp">
+                    <TextView
+                        android:id="@+id/tv_next_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="无"
+                        android:textStyle="bold"
+                        android:textColor="#000000"
+                        android:textSize="15sp"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+                    <TextView
+                        android:id="@+id/tv_next_loc"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#333333"
+                        android:textSize="12sp"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+                    <TextView
+                        android:id="@+id/tv_next_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#888888"
+                        android:textSize="11sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
