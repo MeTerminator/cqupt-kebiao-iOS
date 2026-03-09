@@ -3,8 +3,9 @@ package top.met6.cquptschedule
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.SharedPreferences
-import android.widget.RemoteViews
 import android.os.Bundle
+import android.widget.RemoteViews
+import es.antonborri.home_widget.HomeWidgetPlugin
 import es.antonborri.home_widget.HomeWidgetProvider
 import java.text.SimpleDateFormat
 import java.util.*
@@ -29,17 +30,18 @@ class UpcomingWidgetProvider : HomeWidgetProvider() {
                     val instances = jsonObj.getJSONArray("instances")
                     val week1MondayStr = jsonObj.getString("week_1_monday")
 
-                    // 2. 时间计算逻辑 (完美复刻你的 Swift 逻辑)
+                    // 2. 时间计算逻辑
                     val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                     val firstMonday = format.parse(week1MondayStr.substring(0, 10))
                     val cal = Calendar.getInstance()
                     val nowMillis = cal.timeInMillis
 
                     // 计算当前周和天
-                    val diffDays = ((nowMillis - firstMonday.time) / (1000 * 60 * 60 * 24)).toInt()
+                    val diffDays =
+                            ((nowMillis - (firstMonday?.time ?: 0)) / (1000 * 60 * 60 * 24)).toInt()
                     val currentWeek = (diffDays / 7) + 1
                     var currentDay = cal.get(Calendar.DAY_OF_WEEK) - 1
-                    if (currentDay == 0) currentDay = 7 // 星期天修正为7
+                    if (currentDay == 0) currentDay = 7
 
                     val currentMinutes =
                             cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
@@ -55,8 +57,6 @@ class UpcomingWidgetProvider : HomeWidgetProvider() {
 
                     // 3. 过滤并排序课程
                     val validCourses = mutableListOf<JSONObject>()
-
-                    // 提取今天的有效课程
                     for (i in 0 until instances.length()) {
                         val course = instances.getJSONObject(i)
                         val week = course.getInt("week")
@@ -71,7 +71,6 @@ class UpcomingWidgetProvider : HomeWidgetProvider() {
                         }
                     }
 
-                    // 提取明天的课程 (如果今天没课了，就显示明天的)
                     val tomorrowDay = if (currentDay == 7) 1 else currentDay + 1
                     val tomorrowWeek = if (currentDay == 7) currentWeek + 1 else currentWeek
                     for (i in 0 until instances.length()) {
@@ -83,7 +82,6 @@ class UpcomingWidgetProvider : HomeWidgetProvider() {
                         }
                     }
 
-                    // 按开始时间排序
                     validCourses.sortBy { timeToMin(it.getString("start_time")) }
 
                     // 4. 绑定数据到 UI
@@ -113,25 +111,22 @@ class UpcomingWidgetProvider : HomeWidgetProvider() {
                         }
                     }
 
+                    // 5. 尺寸感知逻辑
                     val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
                     val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
-
-                    // 设置一个阈值，例如 200dp，小于该宽度则隐藏下一节课
                     val isSmall = minWidth < 200
 
-                    if (isSmall) {
-                        // 隐藏下一节课的整体容器 (你需要给右侧容器一个 ID)
-                        views.setViewVisibility(R.id.layout_next_course, android.view.View.GONE)
-                        // 隐藏分隔线
-                        views.setViewVisibility(R.id.divider_line, android.view.View.GONE)
-                    } else {
-                        views.setViewVisibility(R.id.layout_next_course, android.view.View.VISIBLE)
-                        views.setViewVisibility(R.id.divider_line, android.view.View.VISIBLE)
-                    }
+                    views.setViewVisibility(
+                            R.id.layout_next_course,
+                            if (isSmall) android.view.View.GONE else android.view.View.VISIBLE
+                    )
+                    views.setViewVisibility(
+                            R.id.divider_line,
+                            if (isSmall) android.view.View.GONE else android.view.View.VISIBLE
+                    )
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                // 解析失败或无数据的默认状态已在 XML 中定义
             }
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
@@ -144,8 +139,8 @@ class UpcomingWidgetProvider : HomeWidgetProvider() {
             appWidgetId: Int,
             newOptions: Bundle
     ) {
-        // 当尺寸改变时，立即调用 onUpdate 重新绘制
-        val widgetData = context.getSharedPreferences("你的存储名称", Context.MODE_PRIVATE)
+        // 使用 HomeWidgetPlugin.getData 获取数据，确保与 Flutter 端同步
+        val widgetData = HomeWidgetPlugin.getData(context)
         onUpdate(context, appWidgetManager, intArrayOf(appWidgetId), widgetData)
         super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
     }
