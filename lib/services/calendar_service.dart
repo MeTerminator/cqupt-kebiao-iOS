@@ -34,12 +34,18 @@ class CalendarService {
     final calendarsResult = await _deviceCalendarPlugin.retrieveCalendars();
     if (calendarsResult.isSuccess && calendarsResult.data != null) {
       for (var c in calendarsResult.data!) {
-        if (c.name == finalName) return c;
+        // 如果是 Android，发现同名直接删除以便重建；iOS 则直接返回复用
+        if (c.name == finalName) {
+          if (Platform.isAndroid) {
+            await _deviceCalendarPlugin.deleteCalendar(c.id!);
+          } else {
+            return c;
+          }
+        }
       }
     }
 
     // 2. 创建新日历
-    // Android 注意：localAccountName 在不同机型上表现不同，'Phone' 或 null 最为稳妥
     var result = await _deviceCalendarPlugin.createCalendar(
       finalName,
       calendarColor: const Color(0xFF3498DB),
@@ -47,22 +53,17 @@ class CalendarService {
     );
 
     if (result.isSuccess && result.data != null) {
-      // Android 刚创建完立即查询可能会因为系统同步延迟导致 data 为空
-      // 增加一次重试逻辑
       for (int i = 0; i < 3; i++) {
         if (i > 0) await Future.delayed(const Duration(milliseconds: 200));
         
         final calendarsNow = await _deviceCalendarPlugin.retrieveCalendars();
         if (calendarsNow.isSuccess && calendarsNow.data != null) {
-          // --- 关键修复：使用 where 替代 firstWhere，避免 "No element" 崩溃 ---
           final matches = calendarsNow.data!.where((c) => c.id == result.data);
           if (matches.isNotEmpty) {
             return matches.first;
           }
         }
       }
-      
-      // 如果重试多次还是检索不到（极少见），手动返回一个对象，防止后续流程报错
       return Calendar(id: result.data, name: finalName, isReadOnly: false);
     }
     
@@ -100,7 +101,11 @@ class CalendarService {
     final calendar = await getOrCreateCalendar(calendarName);
     if (calendar == null || calendar.id == null) return false;
 
-    await deleteOldEvents(calendar.id!);
+    // Android 在 getOrCreateCalendar 中已经通过 deleteCalendar 清空了，
+    // 这里仅对 iOS 执行清空旧事件逻辑，避免重复删除。
+    if (Platform.isIOS) {
+      await deleteOldEvents(calendar.id!);
+    }
 
     final firstMonday = DateTime.parse(startDateStr.substring(0, 10));
 
