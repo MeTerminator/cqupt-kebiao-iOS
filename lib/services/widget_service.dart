@@ -23,7 +23,7 @@ class WidgetService {
       await HomeWidget.saveWidgetData('full_schedule_json', jsonEncode(exportData));
       await HomeWidget.updateWidget(
         iOSName: iOSWidgetName,
-        androidName: 'UpcomingWidgetProvider',
+        androidName: 'UpcomingWidgetReceiver',
         );
     } catch (e) {
       // debugPrint("Widget Sync Error: $e");
