@@ -146,7 +146,7 @@ class _UserDetailViewViewState extends State<UserDetailView> {
                           },
                         ),
                         ListTile(
-                          leading: const Icon(Icons.color_lens),
+                          leading: const Icon(Icons.dashboard),
                           title: const Text('主题设置'),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () {

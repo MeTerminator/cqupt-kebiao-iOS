@@ -52,7 +52,7 @@ class _ThemeSettingsContentState extends State<_ThemeSettingsContent> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header 设置
-            _buildSection(context, '顶部 Header 设置', [
+            _buildSection(context, '顶部导航栏设置', [
               _buildHeaderBlurEffectSwitch(context),
               const Divider(height: 1),
               _buildHeaderBackgroundOpacitySlider(context),
