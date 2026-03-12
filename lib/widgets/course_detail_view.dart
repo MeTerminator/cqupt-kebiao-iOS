@@ -127,9 +127,9 @@ class CourseDetailView extends StatelessWidget {
           Text(
             '课程详情',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
           ),
           IconButton(
             onPressed: () => Navigator.pop(context),
@@ -204,9 +204,9 @@ class CourseDetailView extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Text(
               description.replaceAll(r'\n', '\n'),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    height: 1.5,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(height: 1.5),
             ),
           ),
         ),

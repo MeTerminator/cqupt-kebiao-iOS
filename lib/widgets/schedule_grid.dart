@@ -43,11 +43,15 @@ class ScheduleGrid extends StatelessWidget {
 
     final pixelsPerMinute = hourHeight / 50.0;
 
-    final startDiff = (toMinutes(course.startTime) - toMinutes(stdBegin)).toDouble();
+    final startDiff = (toMinutes(course.startTime) - toMinutes(stdBegin))
+        .toDouble();
     final endDiff = (toMinutes(course.endTime) - toMinutes(stdEnd)).toDouble();
 
     final finalY = standardY + (startDiff * pixelsPerMinute);
-    final finalHeight = standardHeight - (startDiff * pixelsPerMinute) + (endDiff * pixelsPerMinute);
+    final finalHeight =
+        standardHeight -
+        (startDiff * pixelsPerMinute) +
+        (endDiff * pixelsPerMinute);
 
     return (finalY, finalHeight.clamp(30.0, double.infinity));
   }
@@ -70,7 +74,8 @@ class ScheduleGrid extends StatelessWidget {
   }
 
   bool isToday(int dayIndex) {
-    if (!viewModel.isCurrentWeekReal || weekToShow != viewModel.selectedWeek) return false;
+    if (!viewModel.isCurrentWeekReal || weekToShow != viewModel.selectedWeek)
+      return false;
     final weekday = DateTime.now().weekday;
     return dayIndex == weekday - 1;
   }
@@ -89,9 +94,7 @@ class ScheduleGrid extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTimeColumn(isDark),
-                Expanded(
-                  child: _buildCourseGrid(context, courses, isDark),
-                ),
+                Expanded(child: _buildCourseGrid(context, courses, isDark)),
               ],
             ),
           ),
@@ -135,7 +138,11 @@ class ScheduleGrid extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: today ? (isDark ? Colors.white : Theme.of(context).primaryColor) : null,
+                        color: today
+                            ? (isDark
+                                  ? Colors.white
+                                  : Theme.of(context).primaryColor)
+                            : null,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -207,7 +214,11 @@ class ScheduleGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildCourseGrid(BuildContext context, List<CourseInstance> courses, bool isDark) {
+  Widget _buildCourseGrid(
+    BuildContext context,
+    List<CourseInstance> courses,
+    bool isDark,
+  ) {
     return SizedBox(
       height: hourHeight * 12,
       child: LayoutBuilder(

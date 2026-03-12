@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/schedule_model.dart';
 import '../view_models/schedule_view_model.dart';
@@ -44,7 +43,7 @@ class _AddCustomCourseViewState extends State<AddCustomCourseView> {
       _selectedDay = course.day;
       _startPeriod = course.startPeriod;
       _endPeriod = course.endPeriod;
-      
+
       // 恢复颜色：优先使用自定义颜色 Hex 值
       if (course.customColorHex != null) {
         _customColor = CourseColors.hexToColor(course.customColorHex!);
@@ -105,13 +104,16 @@ class _AddCustomCourseViewState extends State<AddCustomCourseView> {
     // 保存自定义颜色的 Hex 值
     String? customColorHex;
     int colorIndex = 0; // 默认使用第一个颜色作为占位
-    
+
     if (_customColor != null) {
-      customColorHex = '#${_customColor!.value.toRadixString(16).padLeft(8, '0').toUpperCase().substring(2)}';
+      customColorHex =
+          '#${_customColor!.value.toRadixString(16).padLeft(8, '0').toUpperCase().substring(2)}';
     }
 
     final course = CustomCourse(
-      id: widget.editingCourse?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id:
+          widget.editingCourse?.id ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       title: _titleController.text,
       location: _locationController.text,
       description: _descriptionController.text,
@@ -165,38 +167,74 @@ class _AddCustomCourseViewState extends State<AddCustomCourseView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSection('基本信息', [
-                          _buildTextField('行程标题 (必填)', _titleController, isRequired: true),
+                          _buildTextField(
+                            '行程标题 (必填)',
+                            _titleController,
+                            isRequired: true,
+                          ),
                           _buildTextField('地点', _locationController),
-                          _buildTextField('备注', _descriptionController, maxLines: 3),
+                          _buildTextField(
+                            '备注',
+                            _descriptionController,
+                            maxLines: 3,
+                          ),
                         ]),
                         const SizedBox(height: 16),
                         _buildSection('时间选择', [
                           _buildWeekSelector(isDark),
                           const SizedBox(height: 12),
-                          _buildPickerRow('星期', _selectedDay, List.generate(7, (i) => i + 1),
-                              (v) => setState(() => _selectedDay = v), (i) => '星期${getChineseDay(i)}'),
+                          _buildPickerRow(
+                            '星期',
+                            _selectedDay,
+                            List.generate(7, (i) => i + 1),
+                            (v) => setState(() => _selectedDay = v),
+                            (i) => '星期${getChineseDay(i)}',
+                          ),
                           const SizedBox(height: 12),
                           Row(
                             children: [
                               Expanded(
-                                child: _buildPickerRow('开始', _startPeriod, List.generate(12, (i) => i + 1), (v) {
-                                  setState(() {
-                                    _startPeriod = v;
-                                    if (_endPeriod < v) _endPeriod = v;
-                                  });
-                                }, (i) => '第 $i 节', showLabel: false),
+                                child: _buildPickerRow(
+                                  '开始',
+                                  _startPeriod,
+                                  List.generate(12, (i) => i + 1),
+                                  (v) {
+                                    setState(() {
+                                      _startPeriod = v;
+                                      if (_endPeriod < v) _endPeriod = v;
+                                    });
+                                  },
+                                  (i) => '第 $i 节',
+                                  showLabel: false,
+                                ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12),
-                                child: Text('至', style: TextStyle(color: isDark ? Colors.white70 : Colors.black87)),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                child: Text(
+                                  '至',
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? Colors.white70
+                                        : Colors.black87,
+                                  ),
+                                ),
                               ),
                               Expanded(
-                                child: _buildPickerRow('结束', _endPeriod, List.generate(12, (i) => i + 1), (v) {
-                                  setState(() {
-                                    _endPeriod = v;
-                                    if (_startPeriod > v) _startPeriod = v;
-                                  });
-                                }, (i) => '第 $i 节', showLabel: false),
+                                child: _buildPickerRow(
+                                  '结束',
+                                  _endPeriod,
+                                  List.generate(12, (i) => i + 1),
+                                  (v) {
+                                    setState(() {
+                                      _endPeriod = v;
+                                      if (_startPeriod > v) _startPeriod = v;
+                                    });
+                                  },
+                                  (i) => '第 $i 节',
+                                  showLabel: false,
+                                ),
                               ),
                             ],
                           ),
@@ -241,15 +279,23 @@ class _AddCustomCourseViewState extends State<AddCustomCourseView> {
         children: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('取消', style: TextStyle(color: isDark ? Colors.white60 : Colors.black54)),
+            child: Text(
+              '取消',
+              style: TextStyle(color: isDark ? Colors.white60 : Colors.black54),
+            ),
           ),
           Text(
             isEditing ? '编辑行程' : '添加自定义行程',
             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
           ),
           TextButton(
-            onPressed: _titleController.text.isEmpty || _selectedWeeks.isEmpty ? null : _save,
-            child: Text(isEditing ? '保存' : '添加', style: const TextStyle(fontWeight: FontWeight.bold)),
+            onPressed: _titleController.text.isEmpty || _selectedWeeks.isEmpty
+                ? null
+                : _save,
+            child: Text(
+              isEditing ? '保存' : '添加',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -263,7 +309,14 @@ class _AddCustomCourseViewState extends State<AddCustomCourseView> {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 6),
-          child: Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.grey[400] : Colors.grey[600])),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+            ),
+          ),
         ),
         Container(
           width: double.infinity,
@@ -271,7 +324,10 @@ class _AddCustomCourseViewState extends State<AddCustomCourseView> {
             color: isDark ? const Color(0xFF1C1C1E) : Colors.grey[100],
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Padding(padding: const EdgeInsets.all(12), child: Column(children: children)),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(children: children),
+          ),
         ),
       ],
     );
@@ -284,7 +340,13 @@ class _AddCustomCourseViewState extends State<AddCustomCourseView> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('周数 (已选 ${_selectedWeeks.length} 周)', style: TextStyle(fontSize: 14, color: isDark ? Colors.white : Colors.black87)),
+            Text(
+              '周数 (已选 ${_selectedWeeks.length} 周)',
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
             Row(
               children: [
                 GestureDetector(
@@ -295,14 +357,22 @@ class _AddCustomCourseViewState extends State<AddCustomCourseView> {
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       // 关键修改：深色模式下全选按钮显示为白色，浅色模式跟随主题绿色
-                      color: isDark ? Colors.white : const Color.fromRGBO(0, 122, 89, 1),
+                      color: isDark
+                          ? Colors.white
+                          : const Color.fromRGBO(0, 122, 89, 1),
                     ),
                   ),
                 ),
                 const SizedBox(width: 16),
                 GestureDetector(
                   onTap: _clearWeeks,
-                  child: Text('清空', style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[500] : Colors.grey[600])),
+                  child: Text(
+                    '清空',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.grey[500] : Colors.grey[600],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -324,7 +394,9 @@ class _AddCustomCourseViewState extends State<AddCustomCourseView> {
                   duration: const Duration(milliseconds: 150),
                   width: 46,
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color.fromRGBO(0, 122, 89, 1) : (isDark ? Colors.grey[800] : Colors.grey[200]),
+                    color: isSelected
+                        ? const Color.fromRGBO(0, 122, 89, 1)
+                        : (isDark ? Colors.grey[800] : Colors.grey[200]),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
@@ -332,8 +404,12 @@ class _AddCustomCourseViewState extends State<AddCustomCourseView> {
                       '$week',
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected ? Colors.white : (isDark ? Colors.grey[300] : Colors.grey[800]),
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: isSelected
+                            ? Colors.white
+                            : (isDark ? Colors.grey[300] : Colors.grey[800]),
                       ),
                     ),
                   ),
@@ -346,7 +422,12 @@ class _AddCustomCourseViewState extends State<AddCustomCourseView> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {bool isRequired = false, int maxLines = 1}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool isRequired = false,
+    int maxLines = 1,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -356,36 +437,75 @@ class _AddCustomCourseViewState extends State<AddCustomCourseView> {
         style: TextStyle(color: isDark ? Colors.white : Colors.black87),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey[600], fontSize: 14),
+          labelStyle: TextStyle(
+            color: isDark ? Colors.grey[500] : Colors.grey[600],
+            fontSize: 14,
+          ),
           border: InputBorder.none,
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 10,
+          ),
         ),
         onChanged: isRequired ? (_) => setState(() {}) : null,
       ),
     );
   }
 
-  Widget _buildPickerRow<T>(String label, T value, List<T> items, Function(T) onChanged, String Function(T) labelBuilder, {bool showLabel = true}) {
+  Widget _buildPickerRow<T>(
+    String label,
+    T value,
+    List<T> items,
+    Function(T) onChanged,
+    String Function(T) labelBuilder, {
+    bool showLabel = true,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          if (showLabel) ...[Text(label, style: TextStyle(color: isDark ? Colors.white : Colors.black87)), const Spacer()],
+          if (showLabel) ...[
+            Text(
+              label,
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+            ),
+            const Spacer(),
+          ],
           Expanded(
             flex: showLabel ? 2 : 1,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(color: isDark ? Colors.grey[800] : Colors.grey[200], borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.grey[800] : Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<T>(
                   value: value,
                   isExpanded: true,
-                  dropdownColor: isDark ? const Color(0xFF2C2C2E) : Colors.white,
-                  icon: Icon(Icons.keyboard_arrow_down, size: 20, color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                  dropdownColor: isDark
+                      ? const Color(0xFF2C2C2E)
+                      : Colors.white,
+                  icon: Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 20,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
                   items: items
-                      .map((e) => DropdownMenuItem(value: e, child: Text(labelBuilder(e), style: TextStyle(fontSize: 14, color: isDark ? Colors.white : Colors.black87))))
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            labelBuilder(e),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (v) {
                     if (v != null) onChanged(v);

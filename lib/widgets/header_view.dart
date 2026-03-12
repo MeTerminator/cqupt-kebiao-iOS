@@ -42,7 +42,12 @@ class HeaderView extends StatelessWidget {
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Padding(
-      padding: EdgeInsets.only(top: topPadding + 10, bottom: 5, left: 16, right: 16),
+      padding: EdgeInsets.only(
+        top: topPadding + 10,
+        bottom: 5,
+        left: 16,
+        right: 16,
+      ),
       child: Row(
         children: [
           Column(
@@ -50,7 +55,10 @@ class HeaderView extends StatelessWidget {
             children: [
               Text(
                 DateTime.now().formatToSchedule(),
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 4),
               Row(
@@ -65,7 +73,10 @@ class HeaderView extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: statusBgColor,
                       borderRadius: BorderRadius.circular(4),
@@ -112,7 +123,8 @@ class HeaderView extends StatelessWidget {
                     context: context,
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
-                    builder: (context) => AddCustomCourseView(viewModel: viewModel),
+                    builder: (context) =>
+                        AddCustomCourseView(viewModel: viewModel),
                   );
                 },
                 child: Container(

@@ -83,9 +83,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-      ),
+      const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
     );
 
     if (_isLoading) {
@@ -95,11 +93,7 @@ class _MyAppState extends State<MyApp> {
           colorScheme: ColorScheme.fromSeed(seedColor: schoolGreen),
           useMaterial3: true,
         ),
-        home: const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
+        home: const Scaffold(body: Center(child: CircularProgressIndicator())),
       );
     }
 
@@ -132,10 +126,7 @@ class _MyAppState extends State<MyApp> {
         ),
         themeMode: ThemeMode.system,
         home: _isLoggedIn
-            ? MainHomeView(
-                viewModel: _viewModel,
-                onLogout: _handleLogout,
-              )
+            ? MainHomeView(viewModel: _viewModel, onLogout: _handleLogout)
             : LoginView(onLogin: _handleLogin),
       ),
     );
@@ -162,7 +153,9 @@ class _MainHomeViewState extends State<MainHomeView> {
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: widget.viewModel.selectedWeek);
+    _pageController = PageController(
+      initialPage: widget.viewModel.selectedWeek,
+    );
   }
 
   @override
@@ -176,7 +169,8 @@ class _MainHomeViewState extends State<MainHomeView> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => CourseDetailView(course: course, viewModel: widget.viewModel),
+      builder: (context) =>
+          CourseDetailView(course: course, viewModel: widget.viewModel),
     );
   }
 
@@ -196,7 +190,8 @@ class _MainHomeViewState extends State<MainHomeView> {
   Widget build(BuildContext context) {
     return Consumer<ScheduleViewModel>(
       builder: (context, viewModel, child) {
-        if (_pageController.hasClients && _pageController.page?.round() != viewModel.selectedWeek) {
+        if (_pageController.hasClients &&
+            _pageController.page?.round() != viewModel.selectedWeek) {
           Future.microtask(() {
             if (viewModel.shouldAnimateToWeek) {
               // 用户点击返回当周按钮时使用动画
@@ -235,7 +230,8 @@ class _MainHomeViewState extends State<MainHomeView> {
                         return ScheduleGrid(
                           viewModel: viewModel,
                           weekToShow: index,
-                          onCourseTap: (course) => _showCourseDetail(context, course),
+                          onCourseTap: (course) =>
+                              _showCourseDetail(context, course),
                         );
                       },
                     ),
@@ -249,7 +245,9 @@ class _MainHomeViewState extends State<MainHomeView> {
                 left: 0,
                 right: 0,
                 child: AnimatedSlide(
-                  offset: viewModel.showToast ? Offset.zero : const Offset(0, -1),
+                  offset: viewModel.showToast
+                      ? Offset.zero
+                      : const Offset(0, -1),
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOut,
                   child: Center(

@@ -4,12 +4,12 @@ import 'package:intl/intl.dart';
 class ColorExtensions {
   static Color dynamicCourseColor({required int index, required int total}) {
     if (total <= 0) return Colors.blue;
-    
+
     final safeIndex = index.abs() % total;
     const step = 7;
     final steppedIndex = (safeIndex * step) % total;
     final hue = steppedIndex / total;
-    
+
     return HSVColor.fromAHSV(1.0, hue * 360, 0.7, 0.6).toColor();
   }
 
@@ -21,7 +21,7 @@ class ColorExtensions {
 
   static List<Color> generateHSLColorPalette(int count) {
     if (count <= 0) return [];
-    
+
     final colors = <Color>[];
     for (int i = 0; i < count; i++) {
       final hue = i / count;

@@ -41,7 +41,9 @@ class _HomeViewState extends State<HomeView> {
                     Expanded(
                       child: PageView.builder(
                         itemCount: 21,
-                        controller: PageController(initialPage: viewModel.selectedWeek),
+                        controller: PageController(
+                          initialPage: viewModel.selectedWeek,
+                        ),
                         onPageChanged: (index) {
                           viewModel.selectedWeek = index;
                           viewModel.notifyListeners();
@@ -69,7 +71,9 @@ class _HomeViewState extends State<HomeView> {
                   left: 0,
                   right: 0,
                   child: AnimatedSlide(
-                    offset: viewModel.showToast ? Offset.zero : const Offset(0, -1),
+                    offset: viewModel.showToast
+                        ? Offset.zero
+                        : const Offset(0, -1),
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOut,
                     child: Center(
@@ -84,12 +88,17 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  void _showCourseDetail(BuildContext context, CourseInstance course, ScheduleViewModel viewModel) {
+  void _showCourseDetail(
+    BuildContext context,
+    CourseInstance course,
+    ScheduleViewModel viewModel,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => CourseDetailView(course: course, viewModel: viewModel),
+      builder: (context) =>
+          CourseDetailView(course: course, viewModel: viewModel),
     );
   }
 
@@ -169,11 +178,7 @@ class _MainAppState extends State<MainApp> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
+        home: Scaffold(body: Center(child: CircularProgressIndicator())),
       );
     }
 

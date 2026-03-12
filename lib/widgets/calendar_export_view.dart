@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../view_models/schedule_view_model.dart';
 import '../services/calendar_service.dart'; // 导入 Service
-import '../models/schedule_model.dart';    // 导入 Model
+import '../models/schedule_model.dart'; // 导入 Model
 
 class CalendarExportView extends StatefulWidget {
   final ScheduleViewModel viewModel;
@@ -16,7 +16,7 @@ class CalendarExportView extends StatefulWidget {
 class _CalendarExportViewState extends State<CalendarExportView> {
   late TextEditingController _calendarNameController;
   final CalendarService _calendarService = CalendarService(); // 实例化 Service
-  
+
   bool _isLoading = false; // 本地 loading 状态
   bool _enableAlarm = true;
   int _firstAlert = 30;
@@ -39,8 +39,8 @@ class _CalendarExportViewState extends State<CalendarExportView> {
 
   /// 核心导出逻辑
   Future<void> _handleExport() async {
-    final name = _calendarNameController.text.trim().isEmpty 
-        ? '重邮课表' 
+    final name = _calendarNameController.text.trim().isEmpty
+        ? '重邮课表'
         : _calendarNameController.text.trim();
 
     // 1. 震动反馈
@@ -72,7 +72,9 @@ class _CalendarExportViewState extends State<CalendarExportView> {
         startDateStr: week1Monday,
         calendarName: name,
         firstAlertMinutes: _enableAlarm ? _firstAlert : null,
-        secondAlertMinutes: (_enableAlarm && _secondAlert > 0) ? _secondAlert : null,
+        secondAlertMinutes: (_enableAlarm && _secondAlert > 0)
+            ? _secondAlert
+            : null,
       );
 
       if (mounted) {
@@ -93,7 +95,7 @@ class _CalendarExportViewState extends State<CalendarExportView> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7),
@@ -113,7 +115,7 @@ class _CalendarExportViewState extends State<CalendarExportView> {
                 borderRadius: BorderRadius.circular(2.5),
               ),
             ),
-            
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
@@ -121,18 +123,28 @@ class _CalendarExportViewState extends State<CalendarExportView> {
                 children: [
                   TextButton(
                     onPressed: _isLoading ? null : () => Navigator.pop(context),
-                    child: Text('取消', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+                    child: Text(
+                      '取消',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                    ),
                   ),
-                  const Text('导出至系统日历', 
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 60), 
+                  const Text(
+                    '导出至系统日历',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(width: 60),
                 ],
               ),
             ),
 
             Flexible(
               child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).viewInsets.bottom + 20),
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  8,
+                  16,
+                  MediaQuery.of(context).viewInsets.bottom + 20,
+                ),
                 child: Column(
                   children: [
                     _buildCard(
@@ -153,8 +165,10 @@ class _CalendarExportViewState extends State<CalendarExportView> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    _buildHintText('同步将清空日历 "${_calendarNameController.text}" 下的所有旧课程'),
-                    
+                    _buildHintText(
+                      '同步将清空日历 "${_calendarNameController.text}" 下的所有旧课程',
+                    ),
+
                     const SizedBox(height: 24),
 
                     _buildCard(
@@ -165,22 +179,29 @@ class _CalendarExportViewState extends State<CalendarExportView> {
                             trailing: Switch.adaptive(
                               value: _enableAlarm,
                               activeColor: Colors.blueAccent,
-                              onChanged: _isLoading ? null : (v) => setState(() => _enableAlarm = v),
+                              onChanged: _isLoading
+                                  ? null
+                                  : (v) => setState(() => _enableAlarm = v),
                             ),
                           ),
                           if (_enableAlarm) ...[
                             const Divider(height: 1, indent: 16),
-                            _buildAlertSelector('第一次提醒', _firstAlert, _options, (v) {
-                              setState(() {
-                                _firstAlert = v;
-                                if (_secondAlert >= v) _secondAlert = 0;
-                              });
-                            }),
+                            _buildAlertSelector(
+                              '第一次提醒',
+                              _firstAlert,
+                              _options,
+                              (v) {
+                                setState(() {
+                                  _firstAlert = v;
+                                  if (_secondAlert >= v) _secondAlert = 0;
+                                });
+                              },
+                            ),
                             const Divider(height: 1, indent: 16),
                             _buildAlertSelector(
-                              '第二次提醒', 
-                              _secondAlert, 
-                              [0, ..._options.where((e) => e < _firstAlert)], 
+                              '第二次提醒',
+                              _secondAlert,
+                              [0, ..._options.where((e) => e < _firstAlert)],
                               (v) => setState(() => _secondAlert = v),
                               isSecond: true,
                             ),
@@ -197,32 +218,49 @@ class _CalendarExportViewState extends State<CalendarExportView> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
                         gradient: LinearGradient(
-                          colors: _isLoading 
-                            ? [Colors.grey, Colors.grey] 
-                            : [const Color(0xFF2196F3), const Color(0xFF007AFF)],
+                          colors: _isLoading
+                              ? [Colors.grey, Colors.grey]
+                              : [
+                                  const Color(0xFF2196F3),
+                                  const Color(0xFF007AFF),
+                                ],
                         ),
-                        boxShadow: _isLoading ? [] : [
-                          BoxShadow(
-                            color: Colors.blueAccent.withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          )
-                        ],
+                        boxShadow: _isLoading
+                            ? []
+                            : [
+                                BoxShadow(
+                                  color: Colors.blueAccent.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                       ),
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _handleExport,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
                         child: _isLoading
                             ? const SizedBox(
                                 width: 24,
                                 height: 24,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.5,
+                                ),
                               )
-                            : const Text('立即同步', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                            : const Text(
+                                '立即同步',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -261,7 +299,13 @@ class _CalendarExportViewState extends State<CalendarExportView> {
     );
   }
 
-  Widget _buildAlertSelector(String label, int current, List<int> options, Function(int) onSelect, {bool isSecond = false}) {
+  Widget _buildAlertSelector(
+    String label,
+    int current,
+    List<int> options,
+    Function(int) onSelect, {
+    bool isSecond = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -282,11 +326,24 @@ class _CalendarExportViewState extends State<CalendarExportView> {
                     onSelected: _isLoading ? null : (_) => onSelect(m),
                     selectedColor: Colors.blueAccent.withOpacity(0.2),
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.blueAccent : (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black87),
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected
+                          ? Colors.blueAccent
+                          : (Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white70
+                                : Colors.black87),
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
-                    backgroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.grey[100],
-                    side: BorderSide(color: isSelected ? Colors.blueAccent : Colors.transparent),
+                    backgroundColor:
+                        Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white10
+                        : Colors.grey[100],
+                    side: BorderSide(
+                      color: isSelected
+                          ? Colors.blueAccent
+                          : Colors.transparent,
+                    ),
                     showCheckmark: false,
                   ),
                 );
@@ -306,7 +363,12 @@ class _CalendarExportViewState extends State<CalendarExportView> {
         children: [
           Icon(Icons.info_outline, size: 14, color: Colors.orange[400]),
           const SizedBox(width: 6),
-          Expanded(child: Text(text, style: TextStyle(fontSize: 12, color: Colors.orange[600]))),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 12, color: Colors.orange[600]),
+            ),
+          ),
         ],
       ),
     );

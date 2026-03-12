@@ -14,7 +14,9 @@ class _LoginViewState extends State<LoginView> {
   final TextEditingController _idController = TextEditingController();
 
   Color get schoolGreen => const Color.fromRGBO(0, 122, 89, 1);
-  bool get isValidId => _idController.text.length == 10 && _idController.text.replaceAll(RegExp(r'[0-9]'), '').isEmpty;
+  bool get isValidId =>
+      _idController.text.length == 10 &&
+      _idController.text.replaceAll(RegExp(r'[0-9]'), '').isEmpty;
 
   @override
   void initState() {
@@ -69,10 +71,7 @@ class _LoginViewState extends State<LoginView> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   '学号登录',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ),
               const SizedBox(height: 12),
@@ -92,7 +91,10 @@ class _LoginViewState extends State<LoginView> {
                     hintText: '请输入10位学号',
                     prefixIcon: Icon(Icons.person_outline, color: schoolGreen),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
                   ),
                 ),
               ),
@@ -125,7 +127,9 @@ class _LoginViewState extends State<LoginView> {
                       borderRadius: BorderRadius.circular(15),
                     ),
                     elevation: isValidId ? 5 : 0,
-                    shadowColor: isValidId ? schoolGreen.withOpacity(0.3) : Colors.transparent,
+                    shadowColor: isValidId
+                        ? schoolGreen.withOpacity(0.3)
+                        : Colors.transparent,
                   ),
                   child: const Text(
                     '进入课表',

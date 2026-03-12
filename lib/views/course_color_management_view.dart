@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../view_models/schedule_view_model.dart';
 import '../utils/course_colors.dart';
@@ -96,21 +95,19 @@ class _CourseColorManagementViewState extends State<CourseColorManagementView> {
       itemCount: courseNames.length,
       itemBuilder: (context, index) {
         final courseName = courseNames[index];
-        
+
         // 优先使用自定义颜色，否则使用颜色索引
-        final customColorHex = widget.viewModel.courseCustomColorMap[courseName];
-        
+        final customColorHex =
+            widget.viewModel.courseCustomColorMap[courseName];
+
         // 先计算 colorIndex，用于后续逻辑
         final colorIndex = widget.viewModel.courseColorMap[courseName] ?? index;
-        
+
         final Color color;
         if (customColorHex != null) {
           color = CourseColors.hexToColor(customColorHex);
         } else {
-          color = CourseColors.dynamicCourseColor(
-            index: colorIndex,
-            total: 20,
-          );
+          color = CourseColors.dynamicCourseColor(index: colorIndex, total: 20);
         }
 
         return Card(
@@ -229,9 +226,10 @@ class _ColorPickerSheetState extends State<_ColorPickerSheet> {
   void initState() {
     super.initState();
     _selectedIndex = widget.currentIndex;
-    
+
     // 优先使用课程的自定义颜色
-    final customColorHex = widget.viewModel.courseCustomColorMap[widget.courseName];
+    final customColorHex =
+        widget.viewModel.courseCustomColorMap[widget.courseName];
     if (customColorHex != null) {
       _customColor = CourseColors.hexToColor(customColorHex);
     } else {
@@ -362,42 +360,42 @@ class _ColorPickerSheetState extends State<_ColorPickerSheet> {
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (_customColor != null) {
-                      // 保存自定义颜色的 Hex 值
-                      final customColorHex =
-                          '#${_customColor!.value.toRadixString(16).padLeft(8, '0').toUpperCase().substring(2)}';
-                      widget.viewModel.updateCourseCustomColor(
-                        widget.courseName,
-                        customColorHex,
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_customColor != null) {
+                        // 保存自定义颜色的 Hex 值
+                        final customColorHex =
+                            '#${_customColor!.value.toRadixString(16).padLeft(8, '0').toUpperCase().substring(2)}';
+                        widget.viewModel.updateCourseCustomColor(
+                          widget.courseName,
+                          customColorHex,
+                        );
+                      } else {
+                        widget.viewModel.updateCourseColor(
+                          widget.courseName,
+                          _selectedIndex,
+                        );
+                      }
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('颜色已更新'),
+                          duration: Duration(seconds: 2),
+                        ),
                       );
-                    } else {
-                      widget.viewModel.updateCourseColor(
-                        widget.courseName,
-                        _selectedIndex,
-                      );
-                    }
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('颜色已更新'),
-                        duration: Duration(seconds: 2),
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromRGBO(0, 122, 89, 1),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromRGBO(0, 122, 89, 1),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
                     ),
+                    child: const Text('保存'),
                   ),
-                  child: const Text('保存'),
                 ),
-              ),
               ],
             ),
           ),

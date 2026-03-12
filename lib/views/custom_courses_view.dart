@@ -53,8 +53,8 @@ class _CustomCoursesViewState extends State<CustomCoursesView> {
                 Text(
                   '自定义行程管理',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 FloatingActionButton.small(
                   onPressed: _showAddCourseDialog,
@@ -99,26 +99,16 @@ class _CustomCoursesViewState extends State<CustomCoursesView> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.event_note_outlined,
-            size: 80,
-            color: Colors.grey,
-          ),
+          const Icon(Icons.event_note_outlined, size: 80, color: Colors.grey),
           const SizedBox(height: 16),
           Text(
             '暂无自定义行程',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
             '点击右上角添加行程',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[400],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
           ),
         ],
       ),
@@ -129,9 +119,7 @@ class _CustomCoursesViewState extends State<CustomCoursesView> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -168,20 +156,14 @@ class _CustomCoursesViewState extends State<CustomCoursesView> {
             if (course.location.isNotEmpty)
               Text(
                 '地点：${course.location}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
             if (course.description.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   '备注：${course.description}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -206,20 +188,14 @@ class _CustomCoursesViewState extends State<CustomCoursesView> {
                 const SizedBox(width: 8),
                 Text(
                   '星期${_getChineseDay(course.day)} 第${course.startPeriod}-${course.endPeriod}节',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
               '周次：${_formatWeeks(course.weeks)}',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
           ],
         ),
