@@ -65,6 +65,7 @@ class _MyAppState extends State<MyApp> {
     });
     _saveLoginState(id, true);
     _viewModel.startup(id);
+    // 登录后会生成颜色映射，不需要手动调用
   }
 
   void _handleLogout() {
@@ -75,6 +76,7 @@ class _MyAppState extends State<MyApp> {
     _saveLoginState('', false);
     _viewModel.currentId = '';
     _viewModel.scheduleData = null;
+    _viewModel.clearAllColorMaps(); // 清空课程颜色映射
     _viewModel.notifyListeners();
   }
 

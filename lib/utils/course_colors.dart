@@ -2,11 +2,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 /// 课程预设颜色列表
-/// 这些颜色通过 HSL 色环均分生成
+/// 采用黄金分割角分配色相，确保颜色分布均匀且鲜艳
 class CourseColors {
   CourseColors._();
 
-  /// 生成预设颜色列表
+  /// 预设颜色列表 (固定生成 20 个区分度高的颜色)
   static List<Color> get presetColors {
     return List.generate(20, (index) {
       return dynamicCourseColor(index: index, total: 20);
@@ -14,41 +14,22 @@ class CourseColors {
   }
 
   /// 根据索引获取动态课程颜色
+  /// 使用黄金比例共轭算法，让相邻颜色的色相差距最大化
   static Color dynamicCourseColor({required int index, required int total}) {
-    final hue = (index * (360.0 / total)) % 360;
-    const saturation = 0.7;
-    const lightness = 0.6;
+    // 1. 使用黄金角 (137.5 度) 避免颜色过于聚集
+    // 即使课程很多，它也能保证相邻的两门课颜色差异感最强
+    final hue = (index * 137.5) % 360;
 
-    return _hslToColor(hue, saturation, lightness);
+    // 2. 强制设置 高饱和度 和 中等亮度
+    // 这是避开“棕色/灰色/深色”陷阱的最优参数组合
+    const saturation = 0.65;
+    const lightness = 0.40;
+
+    // 使用 Flutter 原生 HSLColor 类，由引擎计算 RGB，保证色彩纯度
+    return HSLColor.fromAHSL(1.0, hue, saturation, lightness).toColor();
   }
 
-  /// HSL 转 Color
-  static Color _hslToColor(double h, double s, double l) {
-    final r = _hueToRgb((h / 360) + (1.0 / 3.0), s, l);
-    final g = _hueToRgb((h / 360), s, l);
-    final b = _hueToRgb((h / 360) - (1.0 / 3.0), s, l);
-
-    return Color.fromRGBO(
-      (r * 255).round(),
-      (g * 255).round(),
-      (b * 255).round(),
-      1.0,
-    );
-  }
-
-  static double _hueToRgb(double t1, double t2, double hue) {
-    double h = hue;
-    if (h < 0) h += 1;
-    if (h > 1) h -= 1;
-
-    if (h < (1.0 / 6.0)) return t2 + (t1 - t2) * 6.0 * h;
-    if (h < (1.0 / 2.0)) return t1;
-    if (h < (2.0 / 3.0)) return t2 + (t1 - t2) * ((2.0 / 3.0) - h) * 6.0;
-
-    return t2;
-  }
-
-  /// 查找最接近的颜色索引
+  /// 查找最接近的颜色索引（用于 UI 匹配）
   static int findClosestColorIndex(Color color) {
     int closestIndex = 0;
     double minDistance = double.infinity;
@@ -60,31 +41,24 @@ class CourseColors {
         closestIndex = i;
       }
     }
-
     return closestIndex;
   }
 
-  /// 计算两个颜色之间的距离
+  /// 计算两个颜色之间的欧氏距离 (RGB 空间)
   static double _colorDistance(Color c1, Color c2) {
-    final r1 = c1.red.toDouble();
-    final g1 = c1.green.toDouble();
-    final b1 = c1.blue.toDouble();
-    final r2 = c2.red.toDouble();
-    final g2 = c2.green.toDouble();
-    final b2 = c2.blue.toDouble();
+    final dr = (c1.red - c2.red).toDouble();
+    final dg = (c1.green - c2.green).toDouble();
+    final db = (c1.blue - c2.blue).toDouble();
 
-    return math.sqrt(
-      (r1 - r2) * (r1 - r2) +
-      (g1 - g2) * (g1 - g2) +
-      (b1 - b2) * (b1 - b2),
-    );
+    // 增加颜色差距权重
+    return math.sqrt(dr * dr + dg * dg + db * db);
   }
 
   /// Hex 颜色字符串转 Color
   static Color hexToColor(String hex) {
     hex = hex.replaceAll('#', '');
     if (hex.length == 6) {
-      hex = 'FF$hex'; // 添加 alpha 通道
+      hex = 'FF$hex';
     }
     return Color(int.parse(hex, radix: 16));
   }

@@ -217,13 +217,6 @@ class CourseBlock extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: color.withOpacity(0.8), width: 4),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(0.4),
-                  blurRadius: 10,
-                  spreadRadius: 2,
-                ),
-              ],
             ),
           ),
           Container(

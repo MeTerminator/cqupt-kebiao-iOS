@@ -205,7 +205,7 @@ class ScheduleViewModel extends ChangeNotifier {
     refreshData(silent: true);
   }
 
-  void generateColorMap({bool forceGenerate = false}) {
+  void generateColorMap() {
     final instances = scheduleData?.instances;
     if (instances == null) return;
 
@@ -217,18 +217,15 @@ class ScheduleViewModel extends ChangeNotifier {
             .toList()
           ..sort();
 
-    if (!forceGenerate && courseColorMap.isNotEmpty) {
-      for (var name in names) {
-        if (!courseColorMap.containsKey(name)) {
-          courseColorMap[name] = courseColorMap.length;
-        }
-      }
-    } else {
-      courseColorMap.clear();
-      for (int i = 0; i < names.length; i++) {
-        courseColorMap[names[i]] = i;
-      }
+    courseColorMap.clear();
+
+    // 核心：使用黄金比例分配色相，范围 0-360
+    for (int i = 0; i < names.length; i++) {
+      // 137.5 是黄金分割角，能最大化地分散颜色
+      double hue = (i * 137.5) % 360;
+      courseColorMap[names[i]] = hue.toInt();
     }
+
     notifyListeners();
     _saveColorMap();
   }
@@ -246,6 +243,15 @@ class ScheduleViewModel extends ChangeNotifier {
       courseCustomColorMap.remove(courseName);
     }
     notifyListeners();
+    _saveCustomColorMap();
+  }
+
+  /// 清空所有课程颜色映射
+  void clearAllColorMaps() {
+    courseColorMap.clear();
+    courseCustomColorMap.clear();
+    notifyListeners();
+    _saveColorMap();
     _saveCustomColorMap();
   }
 
@@ -269,12 +275,14 @@ class ScheduleViewModel extends ChangeNotifier {
       courseColorMap = jsonMap.map((key, value) => MapEntry(key, value as int));
       notifyListeners();
     }
-    
+
     // 加载自定义颜色映射
     final String? customData = prefs.getString(kCourseCustomColorMapKey);
     if (customData != null) {
       final Map<String, dynamic> jsonMap = jsonDecode(customData);
-      courseCustomColorMap = jsonMap.map((key, value) => MapEntry(key, value as String));
+      courseCustomColorMap = jsonMap.map(
+        (key, value) => MapEntry(key, value as String),
+      );
       notifyListeners();
     }
   }
@@ -294,7 +302,7 @@ class ScheduleViewModel extends ChangeNotifier {
   List<MapEntry<String, int>> getAllCourseColors() {
     final names = getAllCourseNames();
     final customColors = customCourses.map((e) => e.colorIndex).toSet();
-    
+
     final allColors = <int>{};
     for (var entry in courseColorMap.entries) {
       allColors.add(entry.value);
