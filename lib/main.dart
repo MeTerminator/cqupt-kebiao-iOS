@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 import 'view_models/schedule_view_model.dart';
 import 'views/login_view.dart';
 import 'widgets/header_view.dart';
@@ -9,6 +10,7 @@ import 'widgets/schedule_grid.dart';
 import 'widgets/course_detail_view.dart';
 import 'widgets/user_detail_view.dart';
 import 'widgets/toast_view.dart';
+import 'models/theme_model.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -150,6 +152,24 @@ class MainHomeView extends StatefulWidget {
 class _MainHomeViewState extends State<MainHomeView> {
   late PageController _pageController;
 
+  Decoration? _buildBackgroundDecoration(ScheduleViewModel viewModel) {
+    final backgroundType = viewModel.backgroundType;
+    final backgroundColor = viewModel.backgroundColor;
+    final backgroundImagePath = viewModel.backgroundImagePath;
+
+    if (backgroundType == BackgroundType.image && backgroundImagePath != null) {
+      return BoxDecoration(
+        image: DecorationImage(
+          image: FileImage(File(backgroundImagePath)),
+          fit: BoxFit.cover,
+        ),
+      );
+    } else if (backgroundColor != null) {
+      return BoxDecoration(color: backgroundColor);
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -212,31 +232,34 @@ class _MainHomeViewState extends State<MainHomeView> {
         return Stack(
           children: [
             Scaffold(
-              body: Column(
-                children: [
-                  HeaderView(
-                    viewModel: viewModel,
-                    onUserTap: () => _showUserSheet(context),
-                  ),
-                  Expanded(
-                    child: PageView.builder(
-                      controller: _pageController,
-                      itemCount: 21,
-                      onPageChanged: (index) {
-                        viewModel.selectedWeek = index;
-                        viewModel.notifyListeners();
-                      },
-                      itemBuilder: (context, index) {
-                        return ScheduleGrid(
-                          viewModel: viewModel,
-                          weekToShow: index,
-                          onCourseTap: (course) =>
-                              _showCourseDetail(context, course),
-                        );
-                      },
+              body: Container(
+                decoration: _buildBackgroundDecoration(viewModel),
+                child: Column(
+                  children: [
+                    HeaderView(
+                      viewModel: viewModel,
+                      onUserTap: () => _showUserSheet(context),
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: PageView.builder(
+                        controller: _pageController,
+                        itemCount: 21,
+                        onPageChanged: (index) {
+                          viewModel.selectedWeek = index;
+                          viewModel.notifyListeners();
+                        },
+                        itemBuilder: (context, index) {
+                          return ScheduleGrid(
+                            viewModel: viewModel,
+                            weekToShow: index,
+                            onCourseTap: (course) =>
+                                _showCourseDetail(context, course),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             if (viewModel.showToast)

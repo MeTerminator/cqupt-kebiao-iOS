@@ -55,12 +55,16 @@ class CourseBlock extends StatelessWidget {
       }
     }
 
+    // 应用主题不透明度
+    backgroundColor = backgroundColor.withOpacity(viewModel.courseBlockOpacity);
+
     // 2. 基础文字颜色逻辑：
     // 如果是考试块：文字颜色要和背景反色（白天背景黑->文字白；黑夜背景白->文字黑）
     // 如果是常规块：文字统一白色
-    final Color baseTextColor = isExam
-        ? (isDark ? Colors.black : Colors.white)
-        : Colors.white;
+    // 如果设置了主题字体颜色，使用主题颜色
+    final Color baseTextColor =
+        viewModel.courseBlockTextColor ??
+        (isExam ? (isDark ? Colors.black : Colors.white) : Colors.white);
 
     // 3. 标签（红色部分）在考试块背景下的适配：
     // 在深色背景上用浅红，在浅色背景（黑夜考试块）上用深红，保证可读性
@@ -113,17 +117,25 @@ class CourseBlock extends StatelessWidget {
       }
     }
 
+    // 获取主题边框设置
+    final borderColor =
+        viewModel.courseBlockBorderColor ??
+        (isCustom ? (isDark ? Colors.white70 : Colors.black54) : null);
+    final borderWidth = viewModel.courseBlockBorderWidth;
+
     return Container(
       margin: const EdgeInsets.all(0.5),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(8),
-        border: isCustom
-            ? Border.all(
-                color: isDark ? Colors.white70 : Colors.black54,
-                width: 2,
-              )
-            : null,
+        border: (borderColor != null && borderWidth > 0)
+            ? Border.all(color: borderColor, width: borderWidth)
+            : (isCustom
+                  ? Border.all(
+                      color: isDark ? Colors.white70 : Colors.black54,
+                      width: 2,
+                    )
+                  : null),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),

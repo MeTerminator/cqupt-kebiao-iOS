@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 import '../view_models/schedule_view_model.dart';
 import '../utils/extensions.dart';
 import 'add_custom_course_view.dart';
@@ -20,6 +21,7 @@ class HeaderView extends StatelessWidget {
     String weekStatus;
     Color statusColor;
     Color statusBgColor;
+    final headerColor = viewModel.headerTextColor;
 
     if (realWeek == 0) {
       weekStatus = "开学准备";
@@ -40,14 +42,24 @@ class HeaderView extends StatelessWidget {
     }
 
     final topPadding = MediaQuery.of(context).padding.top;
+    final headerOpacity = viewModel.headerOpacity;
+    final hasBlurEffect = viewModel.headerBlurEffect;
+    final headerBgColor = viewModel.headerBackgroundColor;
+    final headerBgOpacity = viewModel.headerBackgroundOpacity;
 
-    return Padding(
+    Widget headerContent = Container(
       padding: EdgeInsets.only(
         top: topPadding + 10,
         bottom: 5,
         left: 16,
         right: 16,
       ),
+      decoration: headerBgColor != null && headerBgOpacity > 0
+          ? BoxDecoration(
+              color: headerBgColor.withOpacity(headerBgOpacity),
+              borderRadius: BorderRadius.circular(12),
+            )
+          : null,
       child: Row(
         children: [
           Column(
@@ -55,9 +67,10 @@ class HeaderView extends StatelessWidget {
             children: [
               Text(
                 DateTime.now().formatToSchedule(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
+                  color: headerColor,
                 ),
               ),
               const SizedBox(height: 4),
@@ -65,10 +78,10 @@ class HeaderView extends StatelessWidget {
                 children: [
                   Text(
                     '第${viewModel.selectedWeek}周',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey,
+                      color: headerColor ?? Colors.grey,
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -110,10 +123,10 @@ class HeaderView extends StatelessWidget {
                   },
                   child: Container(
                     padding: const EdgeInsets.all(8),
-                    child: const Icon(
+                    child: Icon(
                       Icons.arrow_back_rounded,
                       size: 24,
-                      color: Colors.orange,
+                      color: headerColor ?? Colors.orange,
                     ),
                   ),
                 ),
@@ -129,10 +142,10 @@ class HeaderView extends StatelessWidget {
                 },
                 child: Container(
                   padding: const EdgeInsets.all(8),
-                  child: const Icon(
+                  child: Icon(
                     Icons.add_circle_rounded,
                     size: 24,
-                    color: Color.fromRGBO(0, 122, 89, 1),
+                    color: headerColor ?? const Color.fromRGBO(0, 122, 89, 1),
                   ),
                 ),
               ),
@@ -146,7 +159,11 @@ class HeaderView extends StatelessWidget {
                   child: AnimatedRotation(
                     turns: viewModel.isLoading ? 1 : 0,
                     duration: const Duration(milliseconds: 500),
-                    child: const Icon(Icons.refresh_rounded, size: 24),
+                    child: Icon(
+                      Icons.refresh_rounded,
+                      size: 24,
+                      color: headerColor,
+                    ),
                   ),
                 ),
               ),
@@ -154,7 +171,11 @@ class HeaderView extends StatelessWidget {
                 onTap: onUserTap,
                 child: Container(
                   padding: const EdgeInsets.all(8),
-                  child: const Icon(Icons.account_circle_rounded, size: 24),
+                  child: Icon(
+                    Icons.account_circle_rounded,
+                    size: 24,
+                    color: headerColor,
+                  ),
                 ),
               ),
             ],
@@ -162,5 +183,22 @@ class HeaderView extends StatelessWidget {
         ],
       ),
     );
+
+    // 应用毛玻璃效果
+    if (hasBlurEffect) {
+      headerContent = ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          child: headerContent,
+        ),
+      );
+    }
+
+    // 应用透明度
+    if (headerOpacity < 1.0) {
+      headerContent = Opacity(opacity: headerOpacity, child: headerContent);
+    }
+
+    return headerContent;
   }
 }

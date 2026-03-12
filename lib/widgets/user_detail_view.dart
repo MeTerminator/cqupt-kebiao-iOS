@@ -3,6 +3,7 @@ import '../view_models/schedule_view_model.dart';
 import 'calendar_export_view.dart';
 import '../views/course_color_management_view.dart';
 import '../views/custom_courses_view.dart';
+import '../views/theme_settings_view.dart';
 
 class UserDetailView extends StatefulWidget {
   final ScheduleViewModel viewModel;
@@ -140,6 +141,19 @@ class _UserDetailViewViewState extends State<UserDetailView> {
                                 builder: (context) => CourseColorManagementView(
                                   viewModel: widget.viewModel,
                                 ),
+                              ),
+                            ).then((_) => setState(() {}));
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.color_lens),
+                          title: const Text('主题设置'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ThemeSettingsView(),
                               ),
                             ).then((_) => setState(() {}));
                           },

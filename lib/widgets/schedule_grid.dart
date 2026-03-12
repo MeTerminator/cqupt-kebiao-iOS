@@ -74,8 +74,9 @@ class ScheduleGrid extends StatelessWidget {
   }
 
   bool isToday(int dayIndex) {
-    if (!viewModel.isCurrentWeekReal || weekToShow != viewModel.selectedWeek)
+    if (!viewModel.isCurrentWeekReal || weekToShow != viewModel.selectedWeek) {
       return false;
+    }
     final weekday = DateTime.now().weekday;
     return dayIndex == weekday - 1;
   }
@@ -105,6 +106,7 @@ class ScheduleGrid extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context, bool isDark) {
     final dateInfo = getDate(0);
+    final timelineColor = viewModel.timelineTextColor;
     return Container(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -116,7 +118,9 @@ class ScheduleGrid extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                color:
+                    timelineColor ??
+                    (isDark ? Colors.grey[400] : Colors.grey[600]),
               ),
             ),
           ),
@@ -138,11 +142,13 @@ class ScheduleGrid extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: today
-                            ? (isDark
-                                  ? Colors.white
-                                  : Theme.of(context).primaryColor)
-                            : null,
+                        color:
+                            timelineColor ??
+                            (today
+                                ? (isDark
+                                      ? Colors.white
+                                      : Theme.of(context).primaryColor)
+                                : null),
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -150,7 +156,9 @@ class ScheduleGrid extends StatelessWidget {
                       dayInfo.day,
                       style: TextStyle(
                         fontSize: 10,
-                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        color:
+                            timelineColor ??
+                            (isDark ? Colors.grey[400] : Colors.grey[600]),
                       ),
                     ),
                   ],
@@ -164,6 +172,7 @@ class ScheduleGrid extends StatelessWidget {
   }
 
   Widget _buildTimeColumn(bool isDark) {
+    final timelineColor = viewModel.timelineTextColor;
     return Column(
       children: List.generate(12, (i) {
         final period = i + 1;
@@ -188,7 +197,9 @@ class ScheduleGrid extends StatelessWidget {
                 '$period',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  color:
+                      timelineColor ??
+                      (isDark ? Colors.grey[400] : Colors.grey[600]),
                 ),
               ),
               if (t != null) ...[
@@ -196,14 +207,18 @@ class ScheduleGrid extends StatelessWidget {
                   t['begin']!,
                   style: TextStyle(
                     fontSize: 8,
-                    color: isDark ? Colors.grey[500] : Colors.grey[500],
+                    color:
+                        timelineColor ??
+                        (isDark ? Colors.grey[500] : Colors.grey[500]),
                   ),
                 ),
                 Text(
                   t['end']!,
                   style: TextStyle(
                     fontSize: 8,
-                    color: isDark ? Colors.grey[500] : Colors.grey[500],
+                    color:
+                        timelineColor ??
+                        (isDark ? Colors.grey[500] : Colors.grey[500]),
                   ),
                 ),
               ],

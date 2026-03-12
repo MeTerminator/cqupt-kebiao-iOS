@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/schedule_model.dart';
+import '../models/theme_model.dart';
 import '../services/widget_service.dart';
 
 class ScheduleViewModel extends ChangeNotifier {
@@ -16,6 +17,7 @@ class ScheduleViewModel extends ChangeNotifier {
   String currentId = "";
   Map<String, int> courseColorMap = {}; // 课程颜色索引映射
   Map<String, String> courseCustomColorMap = {}; // 课程自定义颜色 Hex 映射
+  ThemeSettings currentTheme = ThemeSettings.defaultTheme(); // 当前主题设置
 
   String toastMessage = "";
   bool showToast = false;
@@ -30,6 +32,7 @@ class ScheduleViewModel extends ChangeNotifier {
   static const String kSavedIdKey = "saved_id";
   static const String kCourseColorMapKey = "course_color_map";
   static const String kCourseCustomColorMapKey = "course_custom_color_map";
+  static const String kThemeSettingsKey = "theme_settings";
 
   ScheduleViewModel() {
     _refreshTimer = Timer.periodic(
@@ -37,6 +40,7 @@ class ScheduleViewModel extends ChangeNotifier {
       (_) => refreshData(silent: true),
     );
     loadCustomCourses();
+    loadThemeSettings();
   }
 
   @override
@@ -533,6 +537,93 @@ class ScheduleViewModel extends ChangeNotifier {
 
     return minWeek == maxWeek ? "第 $minWeek 周" : "$minWeek - $maxWeek 周";
   }
+
+  // 主题设置相关方法
+  Future<void> saveThemeSettings(ThemeSettings theme) async {
+    currentTheme = theme;
+    final prefs = await SharedPreferences.getInstance();
+    final String data = jsonEncode(theme.toJson());
+    await prefs.setString(kThemeSettingsKey, data);
+    notifyListeners();
+  }
+
+  Future<void> loadThemeSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? data = prefs.getString(kThemeSettingsKey);
+    if (data != null) {
+      try {
+        final Map<String, dynamic> jsonMap = jsonDecode(data);
+        currentTheme = ThemeSettings.fromJson(jsonMap);
+        notifyListeners();
+      } catch (e) {
+        debugPrint("Failed to load theme settings: $e");
+        currentTheme = ThemeSettings.defaultTheme();
+      }
+    }
+  }
+
+  Future<void> applyThemePreset(ThemeSettings preset) async {
+    await saveThemeSettings(preset);
+  }
+
+  Color? get headerTextColor {
+    if (currentTheme.headerTextColorHex != null) {
+      return ThemeColorUtils.hexToColor(currentTheme.headerTextColorHex!);
+    }
+    return null;
+  }
+
+  Color? get timelineTextColor {
+    if (currentTheme.timelineTextColorHex != null) {
+      return ThemeColorUtils.hexToColor(currentTheme.timelineTextColorHex!);
+    }
+    return null;
+  }
+
+  Color? get courseBlockTextColor {
+    if (currentTheme.courseBlockTextColorHex != null) {
+      return ThemeColorUtils.hexToColor(currentTheme.courseBlockTextColorHex!);
+    }
+    return null;
+  }
+
+  Color? get courseBlockBorderColor {
+    if (currentTheme.courseBlockBorderColorHex != null) {
+      return ThemeColorUtils.hexToColor(
+        currentTheme.courseBlockBorderColorHex!,
+      );
+    }
+    return null;
+  }
+
+  double get courseBlockBorderWidth => currentTheme.courseBlockBorderWidth;
+
+  double get courseBlockOpacity => currentTheme.courseBlockOpacity;
+
+  Color? get backgroundColor {
+    if (currentTheme.backgroundType == BackgroundType.solid &&
+        currentTheme.backgroundColorHex != null) {
+      return ThemeColorUtils.hexToColor(currentTheme.backgroundColorHex!);
+    }
+    return null;
+  }
+
+  String? get backgroundImagePath => currentTheme.backgroundImagePath;
+
+  BackgroundType get backgroundType => currentTheme.backgroundType;
+
+  double get headerOpacity => currentTheme.headerOpacity;
+
+  bool get headerBlurEffect => currentTheme.headerBlurEffect;
+
+  Color? get headerBackgroundColor {
+    if (currentTheme.headerBackgroundColorHex != null) {
+      return ThemeColorUtils.hexToColor(currentTheme.headerBackgroundColorHex!);
+    }
+    return null;
+  }
+
+  double get headerBackgroundOpacity => currentTheme.headerBackgroundOpacity;
 }
 
 class DateFormat {
