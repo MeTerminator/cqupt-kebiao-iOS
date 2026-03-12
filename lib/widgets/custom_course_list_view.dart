@@ -140,17 +140,12 @@ class _CustomCourseListViewState extends State<CustomCourseListView> {
                 height: 10,
                 decoration: BoxDecoration(
                   // 优先使用 customColorHex，否则使用 colorIndex
-                  color: () {
-                    print('自定义行程列表 - 课程：${item.title}, customColorHex: ${item.customColorHex}, colorIndex: ${item.colorIndex}');
-                    if (item.customColorHex != null) {
-                      return _hexToColor(item.customColorHex!);
-                    } else {
-                      return CourseColors.dynamicCourseColor(
-                        index: item.colorIndex,
-                        total: 10,
-                      );
-                    }
-                  }(),
+                  color: item.customColorHex != null
+                      ? _hexToColor(item.customColorHex!)
+                      : CourseColors.dynamicCourseColor(
+                          index: item.colorIndex,
+                          total: 10,
+                        ),
                   shape: BoxShape.circle,
                 ),
               ),

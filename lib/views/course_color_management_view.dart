@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../view_models/schedule_view_model.dart';
 import '../utils/course_colors.dart';
+import '../widgets/custom_color_picker_sheet.dart';
 
 class CourseColorManagementView extends StatefulWidget {
   final ScheduleViewModel viewModel;
@@ -27,7 +28,6 @@ class _CourseColorManagementViewState extends State<CourseColorManagementView> {
   }
 
   void _onViewModelChanged() {
-    print('课程颜色管理页面收到 ViewModel 变化通知');
     setState(() {});
   }
 
@@ -99,7 +99,6 @@ class _CourseColorManagementViewState extends State<CourseColorManagementView> {
         
         // 优先使用自定义颜色，否则使用颜色索引
         final customColorHex = widget.viewModel.courseCustomColorMap[courseName];
-        print('课程列表显示 - 课程：$courseName, customColorHex: $customColorHex');
         
         // 先计算 colorIndex，用于后续逻辑
         final colorIndex = widget.viewModel.courseColorMap[courseName] ?? index;
@@ -366,45 +365,42 @@ class _ColorPickerSheetState extends State<_ColorPickerSheet> {
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_customColor != null) {
-                        // 保存自定义颜色的 Hex 值
-                        final customColorHex =
-                            '#${_customColor!.value.toRadixString(16).padLeft(8, '0').toUpperCase().substring(2)}';
-                        print(
-                          '课程颜色管理 - 保存自定义颜色：${widget.courseName}, Hex: $customColorHex',
-                        );
-                        widget.viewModel.updateCourseCustomColor(
-                          widget.courseName,
-                          customColorHex,
-                        );
-                      } else {
-                        widget.viewModel.updateCourseColor(
-                          widget.courseName,
-                          _selectedIndex,
-                        );
-                      }
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('颜色已更新'),
-                          duration: Duration(seconds: 2),
-                        ),
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_customColor != null) {
+                      // 保存自定义颜色的 Hex 值
+                      final customColorHex =
+                          '#${_customColor!.value.toRadixString(16).padLeft(8, '0').toUpperCase().substring(2)}';
+                      widget.viewModel.updateCourseCustomColor(
+                        widget.courseName,
+                        customColorHex,
                       );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromRGBO(0, 122, 89, 1),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    } else {
+                      widget.viewModel.updateCourseColor(
+                        widget.courseName,
+                        _selectedIndex,
+                      );
+                    }
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('颜色已更新'),
+                        duration: Duration(seconds: 2),
                       ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromRGBO(0, 122, 89, 1),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Text('保存'),
                   ),
+                  child: const Text('保存'),
                 ),
+              ),
               ],
             ),
           ),
@@ -418,15 +414,16 @@ class _ColorPickerSheetState extends State<_ColorPickerSheet> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _CustomColorPickerSheet(initialColor: _customColor),
+      builder: (context) => CustomColorPickerSheet(
+        initialColor: _customColor,
+        onColorSelected: (color) {
+          setState(() {
+            _customColor = color;
+            _selectedIndex = -1;
+          });
+        },
+      ),
     );
-
-    if (result != null) {
-      setState(() {
-        _customColor = result;
-        _selectedIndex = -1;
-      });
-    }
   }
 
   /// Hex 颜色字符串转 Color
@@ -495,7 +492,6 @@ class _CustomColorPickerSheetState extends State<_CustomColorPickerSheet> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
-          // 颜色预览
           Center(
             child: Container(
               width: 80,
@@ -515,7 +511,6 @@ class _CustomColorPickerSheetState extends State<_CustomColorPickerSheet> {
             ),
           ),
           const SizedBox(height: 24),
-          // 色相滑块
           _buildSliderRow(
             '色相',
             _hue,
@@ -528,7 +523,6 @@ class _CustomColorPickerSheetState extends State<_CustomColorPickerSheet> {
             isHueSlider: true,
           ),
           const SizedBox(height: 16),
-          // 饱和度滑块
           _buildSliderRow(
             '饱和度',
             _saturation * 100,
@@ -541,7 +535,6 @@ class _CustomColorPickerSheetState extends State<_CustomColorPickerSheet> {
             displayValue: '${(_saturation * 100).toInt()}%',
           ),
           const SizedBox(height: 16),
-          // 亮度滑块
           _buildSliderRow(
             '亮度',
             _lightness * 100,
@@ -554,7 +547,6 @@ class _CustomColorPickerSheetState extends State<_CustomColorPickerSheet> {
             displayValue: '${(_lightness * 100).toInt()}%',
           ),
           const SizedBox(height: 24),
-          // Hex 值显示
           Center(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

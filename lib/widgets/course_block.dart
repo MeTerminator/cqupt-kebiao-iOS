@@ -48,7 +48,6 @@ class CourseBlock extends StatelessWidget {
         backgroundColor = _hexToColor(customColorHex);
       } else {
         final colorIndex = viewModel.courseColorMap[course.course] ?? 0;
-        print('课程块显示 - 课程名：${course.course}, colorIndex: $colorIndex, courseColorMap: ${viewModel.courseColorMap}');
         backgroundColor = CourseColors.dynamicCourseColor(
           index: colorIndex,
           total: 20,
