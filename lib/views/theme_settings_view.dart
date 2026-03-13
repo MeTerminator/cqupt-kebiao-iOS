@@ -327,16 +327,27 @@ class _ThemeSettingsContentState extends State<_ThemeSettingsContent> {
                 label: const Text('从相册选择'),
               ),
             ),
+            // 修改后的删除按钮部分
             if (_currentTheme.backgroundImagePath != null) ...[
               const SizedBox(width: 12),
-              IconButton(
-                onPressed: () {
-                  _updateAndSaveTheme(
-                    _currentTheme.copyWith(backgroundImagePath: null),
-                  );
-                },
-                icon: const Icon(Icons.clear),
-                color: Colors.red,
+              // 包裹在 Material 中，并给予足够的 InkWell 区域
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    // 使用 setState 确保 UI 更新
+                    setState(() {
+                      _updateAndSaveTheme(
+                        _currentTheme.copyWith(backgroundImagePath: null),
+                      );
+                    });
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Icon(Icons.clear, color: Colors.red),
+                  ),
+                ),
               ),
             ],
           ],
