@@ -6,28 +6,31 @@ struct UpcomingCourseWidgetView: View {
     var entry: CourseEntry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .bottom) {
-                Text(entry.todayDateStr)
-                    .font(.system(size: 13, weight: .regular))
-                Spacer()
-                if family != .systemSmall {
-                    Text(entry.todayWeekInfo)
+        // 使用 TimelineView 包裹，确保视图在刷新时基于最新的时间上下文进行渲染
+        TimelineView(.everyMinute) { context in
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .bottom) {
+                    Text(entry.todayDateStr)
                         .font(.system(size: 13, weight: .regular))
+                    Spacer()
+                    if family != .systemSmall {
+                        Text(entry.todayWeekInfo)
+                            .font(.system(size: 13, weight: .regular))
+                    }
                 }
-            }
 
-            // 内容区
-            if family == .systemSmall {
-                smallLayout
-            } else {
-                mediumLayout
-            }
+                // 内容区
+                if family == .systemSmall {
+                    smallLayout
+                } else {
+                    mediumLayout
+                }
 
-            Spacer(minLength: 0)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 12)
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 12)
     }
 
     // MARK: - 中号组件布局 (左右并排)

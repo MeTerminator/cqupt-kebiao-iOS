@@ -23,18 +23,18 @@ struct CourseInstance: Codable, Identifiable {
 }
 
 extension CourseInstance {
-    // 判断当前时刻相对于课程的进度 (0.0 - 1.0)
     func progress(at date: Date) -> Double {
+        let calendar = Calendar.current
         let nowMin =
-            Calendar.current.component(.hour, from: date) * 60
-            + Calendar.current.component(.minute, from: date)
+            calendar.component(.hour, from: date) * 60 + calendar.component(.minute, from: date)
+
         let total = Double(endMin - startMin)
         if total <= 0 { return 1.0 }
+
         let passed = Double(nowMin - startMin)
         return max(0, min(1, passed / total))
     }
 }
-
 struct ScheduleResponse: Codable {
     let week_1_monday: String
     let instances: [CourseInstance]

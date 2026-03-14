@@ -5,46 +5,68 @@ struct LockScreenWidgetView: View {
     var entry: CourseEntry
 
     var body: some View {
-        // 获取当前分钟数
-        let nowMin =
-            Calendar.current.component(.hour, from: entry.date) * 60
-            + Calendar.current.component(.minute, from: entry.date)
+        TimelineView(.everyMinute) { context in
+            let now = context.date
+            let nowMin =
+                Calendar.current.component(.hour, from: now) * 60
+                + Calendar.current.component(.minute, from: now)
 
-        // 筛选出当前或接下来的一节课
-        if let course = entry.courses.first(where: { $0.endMin > nowMin }) {
-            let isOngoing = course.startMin <= nowMin
-            let targetMin = isOngoing ? course.endMin : course.startMin
-            let remaining = targetMin - nowMin
-            let timeStr = String(format: "%02d:%02d", remaining / 60, remaining % 60)
+            if let course = entry.courses.first(where: { $0.endMin > nowMin }) {
+                let isOngoing = course.startMin <= nowMin
+                let targetDate =
+                    isOngoing
+                    ? combine(date: now, timeStr: course.end_time)
+                    : combine(date: now, timeStr: course.start_time)
 
-            HStack(spacing: 8) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(isOngoing ? "还剩 \(timeStr) 下课" : "还剩 \(timeStr) 上课")
-                        .font(.system(size: 14, weight: .bold))
-                    Text(course.course)
-                        .font(.system(size: 14, weight: .semibold))
-                        .lineLimit(1)
-                    Text(course.location)
-                        .font(.system(14))
-                        .lineLimit(1)
-                }
+                // 布局核心：HStack 默认左对齐，将进度环放最前，随后是信息区
+                HStack(alignment: .center, spacing: 8) {
 
-                // 如果是进行中，显示进度环
-                if isOngoing {
-                    ZStack {
-                        Circle()
-                            .stroke(Color.white.opacity(0.3), lineWidth: 3)
-                        Circle()
-                            .trim(from: 0, to: CGFloat(course.progress(at: entry.date)))
-                            .stroke(Color.white, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                            .rotationEffect(.degrees(-90))
+                    // 2. 信息区：左对齐
+                    VStack(alignment: .leading, spacing: 1) {
+                        if let target = targetDate {
+                            // 倒计时文本
+                            Text(isOngoing ? " 下课" : " 上课")
+                                .font(.system(size: 16))
+                                + Text(target, style: .timer)
+                                .font(.system(size: 16, weight: .bold))
+                                .monospacedDigit()
+                        }
+
+                        Text(course.course)
+                            .font(.system(size: 16, weight: .semibold))
+                            .lineLimit(1)
+                        Text(course.location)
+                            .font(.system(size: 16))
+                            .lineLimit(1)
                     }
-                    .frame(width: 20, height: 20)
+
+                    // 3. 这里的 Spacer 将内容向左顶（如果需要的话）
+                    Spacer(minLength: 0)
+
+                    // 1. 进度环：仅在进行中显示，固定在左侧
+                    if isOngoing, let target = targetDate {
+                        ZStack {
+                            Circle().stroke(Color.white.opacity(0.3), lineWidth: 3)
+                            Circle()
+                                .trim(from: 0, to: CGFloat(course.progress(at: now)))
+                                .stroke(
+                                    Color.white, style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                                )
+                                .rotationEffect(.degrees(-90))
+                        }
+                        .frame(width: 20, height: 20)
+                    }
                 }
+            } else {
+                Text("近期无课程")
             }
-        } else {
-            Text("当前无课").font(.subheadline)
         }
+    }
+
+    func combine(date: Date, timeStr: String) -> Date? {
+        let parts = timeStr.split(separator: ":")
+        guard parts.count == 2, let h = Int(parts[0]), let m = Int(parts[1]) else { return nil }
+        return Calendar.current.date(bySettingHour: h, minute: m, second: 0, of: date)
     }
 }
 
@@ -58,7 +80,7 @@ struct LockScreenWidget: Widget {
                 .containerBackground(.clear, for: .widget)
         }
         .configurationDisplayName("锁屏课表")
-        .description("显示课程进度与倒计时")
-        .supportedFamilies([.accessoryRectangular])  // 仅支持锁屏矩形
+        .description("实时显示课程进度与倒计时")
+        .supportedFamilies([.accessoryRectangular])
     }
 }
