@@ -5,46 +5,54 @@ struct LockScreenWidgetView: View {
     var entry: CourseEntry
 
     var body: some View {
+        // TimelineView 不再负责倒计时更新，而是负责“判断当前该显示哪个课程”
+        // 原生 .timer 组件会自动处理秒级更新
         TimelineView(.everyMinute) { context in
-            let now = context.date
-            let nowMin =
-                Calendar.current.component(.hour, from: now) * 60
-                + Calendar.current.component(.minute, from: now)
+            contentView(context: context)
+        }
+    }
 
-            if let course = entry.courses.first(where: { $0.endMin > nowMin }) {
-                let isOngoing = course.startMin <= nowMin
-                let targetDate =
-                    isOngoing
-                    ? combine(date: now, timeStr: course.end_time)
-                    : combine(date: now, timeStr: course.start_time)
+    @ViewBuilder
+    func contentView(context: TimelineViewDefaultContext) -> some View {
+        let now = context.date
+        let nowMin =
+            Calendar.current.component(.hour, from: now) * 60
+            + Calendar.current.component(.minute, from: now)
 
-                // 布局核心：HStack 默认左对齐，将进度环放最前，随后是信息区
+        let todayCourses = Array(entry.courses.prefix(entry.todayCourseCount))
+        let upcomingCourse =
+            todayCourses.first(where: { $0.endMin > nowMin })
+            ?? entry.courses.dropFirst(entry.todayCourseCount).first
+
+        if let course = upcomingCourse {
+            let isToday = todayCourses.contains(where: { $0.id == course.id })
+            let isOngoing = isToday && course.startMin <= nowMin
+
+            // 获取目标时间
+            if let targetDate = combine(
+                date: now, timeStr: isOngoing ? course.end_time : course.start_time,
+                isTomorrow: !isToday)
+            {
+
                 HStack(alignment: .center, spacing: 8) {
-
-                    // 2. 信息区：左对齐
                     VStack(alignment: .leading, spacing: 1) {
-                        if let target = targetDate {
-                            // 倒计时文本
-                            Text(isOngoing ? " 下课" : " 上课")
-                                .font(.system(size: 16))
-                                + Text(target, style: .timer)
+                        // 原生倒计时部分
+                        HStack(spacing: 0) {
+                            Text(isToday ? (isOngoing ? "离下课 " : "离上课 ") : "离上课 ")
+
+                            Text(targetDate, style: .timer)
                                 .font(.system(size: 16, weight: .bold))
                                 .monospacedDigit()
                         }
+                        .font(.system(size: 16))
 
-                        Text(course.course)
-                            .font(.system(size: 16, weight: .semibold))
-                            .lineLimit(1)
-                        Text(course.location)
-                            .font(.system(size: 16))
-                            .lineLimit(1)
+                        Text(course.course).font(.system(size: 16, weight: .bold)).lineLimit(1)
+                        Text(course.location).font(.system(size: 16, weight: .medium)).lineLimit(1)
                     }
 
-                    // 3. 这里的 Spacer 将内容向左顶（如果需要的话）
                     Spacer(minLength: 0)
 
-                    // 1. 进度环：仅在进行中显示，固定在左侧
-                    if isOngoing, let target = targetDate {
+                    if isOngoing {
                         ZStack {
                             Circle().stroke(Color.white.opacity(0.3), lineWidth: 3)
                             Circle()
@@ -57,16 +65,24 @@ struct LockScreenWidgetView: View {
                         .frame(width: 20, height: 20)
                     }
                 }
-            } else {
-                Text("近期无课程")
             }
+        } else {
+            Text("近期无课程").font(.subheadline)
         }
     }
 
-    func combine(date: Date, timeStr: String) -> Date? {
+    func combine(date: Date, timeStr: String, isTomorrow: Bool) -> Date? {
         let parts = timeStr.split(separator: ":")
         guard parts.count == 2, let h = Int(parts[0]), let m = Int(parts[1]) else { return nil }
-        return Calendar.current.date(bySettingHour: h, minute: m, second: 0, of: date)
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        components.hour = h
+        components.minute = m
+        components.second = 0
+        var targetDate = Calendar.current.date(from: components)
+        if isTomorrow, let t = targetDate {
+            targetDate = Calendar.current.date(byAdding: .day, value: 1, to: t)
+        }
+        return targetDate
     }
 }
 
