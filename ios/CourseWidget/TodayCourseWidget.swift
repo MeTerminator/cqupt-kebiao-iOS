@@ -7,7 +7,7 @@ struct TodayCourseWidgetEntryView: View {
 
     var body: some View {
         // 根据组件大小分配可展示的最大行数
-        let maxLines = (family == .systemLarge) ? 6 : 2
+        let maxLines = (family == .systemLarge) ? 5 : 2
 
         // 1. 计算显示数量
         let todayLimit = min(entry.todayCourseCount, maxLines)
