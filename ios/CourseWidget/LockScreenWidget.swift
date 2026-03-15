@@ -5,16 +5,11 @@ struct LockScreenWidgetView: View {
     var entry: CourseEntry
 
     var body: some View {
-        // TimelineView 不再负责倒计时更新，而是负责“判断当前该显示哪个课程”
-        // 原生 .timer 组件会自动处理秒级更新
-        TimelineView(.everyMinute) { context in
-            contentView(context: context)
-        }
+        contentView(now: Date())
     }
 
     @ViewBuilder
-    func contentView(context: TimelineViewDefaultContext) -> some View {
-        let now = context.date
+    func contentView(now: Date) -> some View {
         let nowMin =
             Calendar.current.component(.hour, from: now) * 60
             + Calendar.current.component(.minute, from: now)

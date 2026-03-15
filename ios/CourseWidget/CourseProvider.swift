@@ -43,23 +43,35 @@ struct Provider: TimelineProvider {
         let currentEntry = loadData(for: now)
         var entries: [CourseEntry] = [currentEntry]
 
-        // 2. 提取今天所有课程的关键时间点（开始和结束）
+        // 2. 提取今天和明天所有课程的关键时间点（开始和结束）
         var refreshDates = Set<Date>()
         for course in currentEntry.courses {
+            // 今天课程的开始和结束时间
             if let start = combine(date: now, timeStr: course.start_time) {
                 refreshDates.insert(start)
             }
-            if let end = combine(date: now, timeStr: course.end_time) { refreshDates.insert(end) }
+            if let end = combine(date: now, timeStr: course.end_time) {
+                refreshDates.insert(end)
+            }
         }
 
-        // 3. 过滤掉过去的时间，排序并取前 10 个关键点，为每个点生成 Entry
+        // 3. 过滤掉过去的时间，排序并为每个关键点生成 Entry
         let futureDates = refreshDates.filter { $0 > now }.sorted()
-        for date in futureDates.prefix(10) {
+        for date in futureDates {
             entries.append(loadData(for: date))
         }
 
-        // 4. 设置刷新策略：在所有 entries 执行完后刷新，或者每分钟保底刷新一次
-        let nextUpdate = calendar.date(byAdding: .minute, value: 1, to: now)!
+        // 4. 设置刷新策略：只在下一个关键时间点刷新（上下课时间）
+        // 如果没有更多关键点，则设置为明天凌晨刷新
+        let nextUpdate: Date
+        if let nextKeyTime = futureDates.first {
+            nextUpdate = nextKeyTime
+        } else {
+            // 设置到明天凌晨 0 点
+            let tomorrow = calendar.date(byAdding: .day, value: 1, to: now)!
+            nextUpdate = calendar.startOfDay(for: tomorrow)
+        }
+
         let timeline = Timeline(entries: entries, policy: .after(nextUpdate))
         completion(timeline)
     }
