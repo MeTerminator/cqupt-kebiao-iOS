@@ -26,8 +26,8 @@ struct UpcomingCourseWidgetView: View {
 
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 2)
+        .padding(.vertical, 8)
     }
 
     // MARK: - 中号组件布局 (左右并排)

@@ -44,21 +44,7 @@ struct LockScreenWidgetView: View {
                         Text(course.course).font(.system(size: 16, weight: .bold)).lineLimit(1)
                         Text(course.location).font(.system(size: 16, weight: .medium)).lineLimit(1)
                     }
-
                     Spacer(minLength: 0)
-
-                    if isOngoing {
-                        ZStack {
-                            Circle().stroke(Color.white.opacity(0.3), lineWidth: 3)
-                            Circle()
-                                .trim(from: 0, to: CGFloat(course.progress(at: now)))
-                                .stroke(
-                                    Color.white, style: StrokeStyle(lineWidth: 3, lineCap: .round)
-                                )
-                                .rotationEffect(.degrees(-90))
-                        }
-                        .frame(width: 20, height: 20)
-                    }
                 }
             }
         } else {

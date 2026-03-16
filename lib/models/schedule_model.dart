@@ -45,6 +45,7 @@ class CourseInstance {
   final String course;
   final String? teacher;
   final int week;
+  final String? weekStr;
   final int day;
   final List<int> periods;
   final String startTime;
@@ -62,6 +63,7 @@ class CourseInstance {
     required this.course,
     this.teacher,
     required this.week,
+    this.weekStr,
     required this.day,
     required this.periods,
     required this.startTime,
@@ -100,6 +102,7 @@ class CourseInstance {
       course: courseName,
       teacher: json['teacher'],
       week: w,
+      weekStr: json['week_str'] ?? json['weekStr'],
       day: d,
       periods: periodsList,
       startTime: json['start_time'] ?? json['startTime'] ?? "08:00",
@@ -118,6 +121,7 @@ class CourseInstance {
     'course': course,
     'teacher': teacher,
     'week': week,
+    'week_str': weekStr,
     'day': day,
     'periods': periods,
     'start_time': startTime,

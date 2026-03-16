@@ -26,7 +26,7 @@ struct TodayCourseWidgetEntryView: View {
                     dateStr: entry.todayDateStr, count: entry.todayCourseCount,
                     weekInfo: entry.todayWeekInfo
                 )
-                .padding(.vertical, 2)
+                .padding(.top, 2)
             }
 
             VStack(alignment: .leading, spacing: 4) {
@@ -50,7 +50,6 @@ struct TodayCourseWidgetEntryView: View {
                             dateStr: entry.tomorrowDateStr, count: entry.tomorrowCourseCount,
                             weekInfo: entry.tomorrowWeekInfo
                         )
-                        .padding(.vertical, 2)
 
                         ForEach(
                             Array(
@@ -67,13 +66,11 @@ struct TodayCourseWidgetEntryView: View {
                         Text("还有 \(unshownCount) 节课未显示")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundColor(.secondary)
-                            .padding(.top, 4)
+                            .padding(.top, 1)
                             .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
             }
-
-            // 这个最后的 Spacer 会将上方所有的内容"顶"到屏幕最上方
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 8)
@@ -104,11 +101,11 @@ struct CourseRow: View {
     var body: some View {
         let teacherStr = (course.teacher?.isEmpty == false) ? course.teacher! : ""
 
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             // 1. 左侧彩色条
             Capsule()
                 .fill(colorFor(course.course))
-                .frame(width: 4, height: 34)
+                .frame(width: 4, height: 32)
 
             // 2. 课程与地点
             VStack(alignment: .leading, spacing: 1) {
@@ -131,7 +128,7 @@ struct CourseRow: View {
             }
         }
         .padding(.horizontal, 10)
-        .padding(.vertical, 4)
+        .padding(.vertical, 2)
         .background(Color.secondary.opacity(0.1))
         .cornerRadius(10)
     }

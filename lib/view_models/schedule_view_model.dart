@@ -520,6 +520,11 @@ class ScheduleViewModel extends ChangeNotifier {
   }
 
   String durationWeeks(CourseInstance course) {
+    // 如果存在非空的 weekStr，则直接返回
+    if (course.weekStr != null && course.weekStr!.trim().isNotEmpty) {
+      return course.weekStr!;
+    }
+
     final allInstances = [
       ...?scheduleData?.instances,
       ...customCourses.map((e) => e.toInstance()),
@@ -530,12 +535,12 @@ class ScheduleViewModel extends ChangeNotifier {
         .toList();
     final weeks = relatedCourses.map((e) => e.week).toList();
 
-    if (weeks.isEmpty) return "第 ${course.week} 周";
+    if (weeks.isEmpty) return "第${course.week}周";
 
     final minWeek = weeks.reduce((a, b) => a < b ? a : b);
     final maxWeek = weeks.reduce((a, b) => a > b ? a : b);
 
-    return minWeek == maxWeek ? "第 $minWeek 周" : "$minWeek - $maxWeek 周";
+    return minWeek == maxWeek ? "第$minWeek周" : "$minWeek-$maxWeek周";
   }
 
   // 主题设置相关方法
